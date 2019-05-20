@@ -1,0 +1,65 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'org.postgresql:postgresql:42.2.5'
+        classpath "gradle.plugin.com.boxfuse.client:gradle-plugin-publishing:5.2.4"
+    }
+    ext.dbProperties = new Properties()
+    dbProperties.load(new FileInputStream(this.projectDir.absolutePath + "/resources/db.properties"))
+}
+
+apply plugin: "org.flywaydb.flyway"
+apply plugin: 'kotlin'
+apply plugin: 'application'
+
+flyway {
+    url = "jdbc:postgresql://${dbProperties['db.host']}:5432/${dbProperties['db.name']}"
+    user = dbProperties['db.user']
+    password = dbProperties['db.password']
+    schemas = ['public']
+    locations=['filesystem:resources/db/migration']
+}
+
+
+group 'pizza-service'
+version '0.0.1'
+mainClassName = "io.ktor.server.netty.EngineMain"
+
+sourceSets {
+    main.kotlin.srcDirs = main.java.srcDirs = ['src']
+    test.kotlin.srcDirs = test.java.srcDirs = ['test']
+    main.resources.srcDirs = ['resources']
+    test.resources.srcDirs = ['testresources']
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    maven { url 'https://kotlin.bintray.com/ktor' }
+    maven { url "https://dl.bintray.com/kotlin/exposed" }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
+    compile "ch.qos.logback:logback-classic:$logback_version"
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-locations:$ktor_version"
+    compile "io.ktor:ktor-server-sessions:$ktor_version"
+    compile "io.ktor:ktor-auth:$ktor_version"
+    compile "io.ktor:ktor-gson:$ktor_version"
+    compile group: 'c3p0', name: 'c3p0', version: '0.9.1.2'
+    compile("org.jetbrains.exposed:exposed:0.13.7") {
+        exclude(module: 'log4j')
+        exclude(module: 'slf4j-log4j12')
+        exclude(module: 'kotlin-stdlib')
+    }
+    testCompile "io.ktor:ktor-server-tests:$ktor_version"
+}
