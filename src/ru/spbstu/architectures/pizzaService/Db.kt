@@ -10,7 +10,7 @@ import java.sql.Driver
 
 object Db {
     private var initialized = false
-    private val pool = ComboPooledDataSource()
+//    private val pool = ComboPooledDataSource()
     private lateinit var myDatabase: Database
 
     val database: Database
@@ -18,19 +18,22 @@ object Db {
 
     fun init(dbConfig: DbConfig) {
         if (initialized) return
-        pool.apply {
-            driverClass = Driver::class.java.name
-            jdbcUrl = "jdbc:postgresql://${dbConfig.host}:5432/${dbConfig.name}"
-            user = dbConfig.user
-            password = dbConfig.password
-        }
-        myDatabase = Database.connect(pool)
+        val jdbcUrl = "jdbc:postgresql://${dbConfig.host}:5432/${dbConfig.name}"
+//        pool.apply {
+//            driverClass = Driver::class.java.name
+//            jdbcUrl = jdbcUrl
+//            user = dbConfig.user
+//            password = dbConfig.password
+//        }
+
+//        myDatabase = Database.connect(pool)
+        myDatabase = Database.connect(jdbcUrl, "org.postgresql.Driver", dbConfig.user, dbConfig.password)
         initialized = true
     }
 
     fun close() {
         if (!initialized) return
-        pool.close()
+//        pool.close()
         initialized = false
     }
 

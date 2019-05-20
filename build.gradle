@@ -39,6 +39,10 @@ sourceSets {
     test.resources.srcDirs = ['testresources']
 }
 
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI"]
+}
+
 repositories {
     mavenLocal()
     jcenter()
@@ -61,5 +65,6 @@ dependencies {
         exclude(module: 'slf4j-log4j12')
         exclude(module: 'kotlin-stdlib')
     }
+    runtimeClasspath 'org.postgresql:postgresql:42.2.5'
     testCompile "io.ktor:ktor-server-tests:$ktor_version"
 }
