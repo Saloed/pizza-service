@@ -14,5 +14,9 @@ data class Order(
     val payment: Payment? = null
 
     val pizza: List<Pizza>? = null
+
+    companion object{
+        val manager = null
+    }
 }
 

@@ -1,12 +1,15 @@
 package ru.spbstu.architectures
 
+import freemarker.cache.ClassTemplateLoader
 import io.ktor.application.Application
 import io.ktor.application.ApplicationStopped
 import io.ktor.application.install
 import io.ktor.features.*
-import io.ktor.gson.gson
+import io.ktor.freemarker.FreeMarker
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
 import io.ktor.locations.Locations
 import io.ktor.routing.routing
 import io.ktor.server.netty.EngineMain
@@ -14,10 +17,12 @@ import io.ktor.sessions.SessionTransportTransformerMessageAuthentication
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 import org.slf4j.event.Level
-import ru.spbstu.architectures.pizzaService.Db
+import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.utils.Hasher
 import ru.spbstu.architectures.pizzaService.web.Session
-import ru.spbstu.architectures.pizzaService.web.sessionManagement
+import ru.spbstu.architectures.pizzaService.web.login
+import ru.spbstu.architectures.pizzaService.web.register
+import ru.spbstu.architectures.pizzaService.web.userPage
 
 
 val config: ConfigurationFacade = ConfigurationFacadeDummy
@@ -61,6 +66,10 @@ fun Application.module() {
         header("X-Engine", "Ktor") // will send this header with each response
     }
 
+    install(FreeMarker) {
+        templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
+    }
+
 //    // http://ktor.io/servers/features/https-redirect.html#testing
 //    if (!testing) {
 //        install(HttpsRedirect) {
@@ -71,15 +80,15 @@ fun Application.module() {
 //        }
 //    }
 
-    install(ContentNegotiation) {
-        gson {
-            serializeNulls()
-            setPrettyPrinting()
-        }
-    }
+
 
     routing {
-        sessionManagement()
+        static("static") {
+            resources("static")
+        }
+        login()
+        register()
+        userPage()
     }
 
 

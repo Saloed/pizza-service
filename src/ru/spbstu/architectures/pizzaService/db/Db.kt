@@ -1,12 +1,9 @@
-package ru.spbstu.architectures.pizzaService
+package ru.spbstu.architectures.pizzaService.db
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.spbstu.architectures.DbConfig
-import java.lang.IllegalStateException
-import java.sql.Driver
 
 object Db {
     private var initialized = false
@@ -18,16 +15,16 @@ object Db {
 
     fun init(dbConfig: DbConfig) {
         if (initialized) return
-        val jdbcUrl = "jdbc:postgresql://${dbConfig.host}:5432/${dbConfig.name}"
+        val url = "jdbc:postgresql://${dbConfig.host}:5432/${dbConfig.name}"
 //        pool.apply {
-//            driverClass = Driver::class.java.name
-//            jdbcUrl = jdbcUrl
+//            driverClass = "org.postgresql.Driver"
+//            jdbcUrl = url
 //            user = dbConfig.user
 //            password = dbConfig.password
 //        }
 
 //        myDatabase = Database.connect(pool)
-        myDatabase = Database.connect(jdbcUrl, "org.postgresql.Driver", dbConfig.user, dbConfig.password)
+        myDatabase = Database.connect(url, "org.postgresql.Driver", dbConfig.user, dbConfig.password)
         initialized = true
     }
 
