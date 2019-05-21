@@ -1,6 +1,5 @@
 package ru.spbstu.architectures.pizzaService.web
 
-import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.freemarker.FreeMarkerContent
 import io.ktor.http.Parameters
@@ -11,7 +10,6 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.sessions.clear
-import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import ru.spbstu.architectures.pizzaService.models.User

@@ -1,8 +1,6 @@
 package ru.spbstu.architectures.pizzaService.web
 
-import io.ktor.application.application
 import io.ktor.application.call
-import io.ktor.application.log
 import io.ktor.freemarker.FreeMarkerContent
 import io.ktor.locations.Location
 import io.ktor.locations.get
@@ -30,37 +28,31 @@ class CourierPage(val login: String)
 @Location("/user/{login}")
 class UserPage(val login: String)
 
+data class Order(val id: Int)
 
 fun Route.userPage() {
     get<UserPage> {
         val user = call.userOrNull() ?: return@get call.redirect(Login())
-        val role = sequenceOf(
-            user.roleClient,
-            user.roleOperator,
-            user.roleManager,
-            user.roleCourier
-        ).firstOrNull { it != null }
-        if (role == null) {
-            application.log.error("User ${user.login} has no roles")
-            return@get call.redirect(Logout())
-        }
-
-        val userPage = when (role) {
+        val userPage = when (user) {
             is Client -> ClientPage(user.login)
             is Manager -> ManagerPage(user.login)
             is Operator -> OperatorPage(user.login)
             is Courier -> CourierPage(user.login)
-            else -> throw IllegalStateException("Unknown user role: ${role::class}")
         }
         call.redirect(userPage)
     }
     get<ClientPage> {
         val user = call.userOrNull() ?: return@get call.redirect(Login())
-        val role = user.roleClient ?: return@get call.redirect(UserPage(user.login))
+        if (user !is Client) return@get call.redirect(UserPage(user.login))
+
         call.respond(
             FreeMarkerContent(
                 "clientPage.ftl",
-                mapOf("login" to role.user.login, "address" to role.address),
+                mapOf(
+                    "login" to user.login,
+                    "address" to user.address,
+                    "orders" to listOf(Order(14))
+                ),
                 ""
             )
         )

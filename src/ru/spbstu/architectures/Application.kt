@@ -6,8 +6,10 @@ import io.ktor.application.ApplicationStopped
 import io.ktor.application.install
 import io.ktor.features.*
 import io.ktor.freemarker.FreeMarker
+import io.ktor.gson.gson
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.cio.parseMultipart
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.Locations
@@ -66,6 +68,13 @@ fun Application.module() {
         header("X-Engine", "Ktor") // will send this header with each response
     }
 
+//    install(ContentNegotiation) {
+//        gson {
+//            serializeNulls()
+//            setPrettyPrinting()
+//        }
+//    }
+
     install(FreeMarker) {
         templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
     }
@@ -79,7 +88,6 @@ fun Application.module() {
 //            permanentRedirect = true
 //        }
 //    }
-
 
 
     routing {
