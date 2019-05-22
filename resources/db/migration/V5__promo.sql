@@ -11,9 +11,9 @@ values (0, 'draft'),
 
 create table if not exists promo
 (
-    id         int not null primary key,
-    manager_id int not null references manager,
-    status_id  int not null references promo_status,
+    id         serial not null primary key,
+    manager_id int    not null references manager,
+    status_id  int    not null references promo_status,
     result     text,
     created_at timestamp,
     updated_at timestamp

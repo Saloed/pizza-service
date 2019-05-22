@@ -1,6 +1,6 @@
 <#-- @ftlvariable name="login" type="java.lang.String" -->
 <#-- @ftlvariable name="address" type="java.lang.String" -->
-<#-- @ftlvariable name="orders" type="java.util.List<ru.spbstu.architectures.pizzaService.web.UserKt.Order>" -->
+<#-- @ftlvariable name="orders" type="java.util.List<ru.spbstu.architectures.pizzaService.web.UserKt.UserOrderListItem>" -->
 
 <#import "template.ftl" as layout />
 

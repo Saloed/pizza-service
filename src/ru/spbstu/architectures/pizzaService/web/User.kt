@@ -29,7 +29,7 @@ class CourierPage(val login: String)
 @Location("/user/{login}")
 class UserPage(val login: String)
 
-data class Order(val id: Int)
+data class UserOrderListItem(val id: Int, val status: String, val payment: Boolean)
 
 fun Route.userPage() {
     get<UserPage> {
@@ -45,7 +45,9 @@ fun Route.userPage() {
     get<ClientPage> {
         val user = call.userOrNull() ?: return@get call.redirect(Login())
         if (user !is Client) return@get call.redirect(UserPage(user.login))
-        val orders = ClientOrder.list(user)
+        val orders = ClientOrder.list(user).map {
+            UserOrderListItem(it.id, it.status.name, it.payment != null)
+        }
 
         call.respond(
             FreeMarkerContent(
@@ -53,7 +55,7 @@ fun Route.userPage() {
                 mapOf(
                     "login" to user.login,
                     "address" to user.address,
-                    "orders" to listOf(Order(14))
+                    "orders" to orders
                 ),
                 ""
             )

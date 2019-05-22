@@ -15,7 +15,7 @@ values (6, 'draft'),
 
 create table if not exists pizza
 (
-    id   int not null primary key,
+    id   serial not null primary key,
     name text
 );
 
@@ -25,10 +25,14 @@ create table if not exists payment_type
     name varchar(100) not null
 );
 
+insert into payment_type (id, name)
+values (0, 'cash'),
+       (1, 'card');
+
 create table if not exists public.order
 (
-    id         int     not null primary key,
-    status_id     int     not null references order_status,
+    id         serial  not null primary key,
+    status_id  int     not null references order_status,
     is_active  boolean not null,
     client_id  int     not null references client,
     created_at timestamp,
@@ -41,15 +45,13 @@ create table if not exists order_pizza
     pizza_id int not null references pizza
 );
 
-insert into payment_type (id, name)
-values (0, 'cash'),
-       (1, 'card');
+
 
 create table if not exists payment
 (
-    id          int not null primary key,
-    type_id        int not null references payment_type,
-    order_id    int not null references public.order,
+    id          serial not null primary key,
+    type_id     int    not null references payment_type,
+    order_id    int    not null references public.order,
     amount      int,
     transaction varchar(255),
     created_at  timestamp,
@@ -66,10 +68,10 @@ create table if not exists order_manager
 
 create table if not exists order_operator
 (
-    order_id   int not null primary key references public.order,
+    order_id    int not null primary key references public.order,
     operator_id int not null references operator,
-    created_at timestamp,
-    updated_at timestamp
+    created_at  timestamp,
+    updated_at  timestamp
 );
 
 create table if not exists order_courier

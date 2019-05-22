@@ -4,4 +4,4 @@ enum class PaymentType {
     CASH, CARD
 }
 
-data class Payment(val id: Int, val type: PaymentType, val amount: Int, val cardTransaction: String?)
+data class Payment(val id: Int, val orderId: Int, val type: PaymentType, val amount: Int, val cardTransaction: String?)

@@ -1,8 +1,10 @@
 package ru.spbstu.architectures.pizzaService.db
 
+import org.intellij.lang.annotations.Language
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import ru.spbstu.architectures.pizzaService.models.*
+import ru.spbstu.architectures.pizzaService.utils.execAndMap
 
 
 object UserModelManager {
@@ -65,6 +67,28 @@ object ClientModelManager : UserRoleManager<Client> {
         }
         return Client(userId, model.login, model.password, model.address)
     }
+
+    fun orders(client: Client): List<Order> {
+        @Language("PostgreSQL") val query = """
+        select
+        ord.id id,
+         ord.client_id client_id,
+         os.name status,
+         ord.is_active is_active,
+         ord.updated_at updated_at,
+         ord.created_at created_at
+         from "order" ord join order_status os on ord.status_id = os.id
+        where ord.client_id = ${client.id}
+    """.trimIndent()
+        return Db.transaction {
+            query.execAndMap {
+                it.run {
+                    val status = OrderStatus.valueOf(getString("status").toUpperCase())
+                    Order(getInt("id"), status, getBoolean("is_active"), getInt("client_id"))
+                }
+            }
+        }
+    }
 }
 
 
@@ -104,4 +128,68 @@ object CourierModelManager : UserRoleManager<Courier> {
         }
         return Courier(userId, model.login, model.password)
     }
+}
+
+object PizzaModelManager {
+
+}
+
+object OrderModelManager {
+    fun get(id: Int): Order? {
+        @Language("PostgreSQL") val query = """
+        select
+        ord.id id,
+         ord.client_id client_id,
+         os.name status,
+         ord.is_active is_active,
+         ord.updated_at updated_at,
+         ord.created_at created_at
+         from "order" ord join order_status os on ord.status_id = os.id
+        where ord.id = ${id}
+    """.trimIndent()
+        return Db.transaction {
+            query.execAndMap {
+                it.run {
+                    val status = OrderStatus.valueOf(getString("status").toUpperCase())
+                    Order(getInt("id"), status, getBoolean("is_active"), getInt("client_id"))
+                }
+            }
+        }.firstOrNull()
+    }
+
+    fun pizza(order: Order): List<Pizza> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun payment(order: Order): Payment? {
+        @Language("PostgreSQL") val query = """
+        select
+        p.id id,
+        p.order_id order_id,
+        p.amount amount,
+        pt.name payment_type,
+        p.transaction payment_transaction,
+        p.created_at created_at,
+        p.updated_at updated_at
+        from payment p join payment_type pt on p.type_id = pt.id
+        where p.order_id = ${order.id}
+    """.trimIndent()
+        return Db.transaction {
+            query.execAndMap {
+                it.run {
+                    val type = PaymentType.valueOf(getString("payment_type").toUpperCase())
+                    Payment(getInt("id"), getInt("order_id"), type, getInt("amount"), getString("payment_transaction"))
+                }
+            }
+        }.firstOrNull()
+    }
+
+    fun manager(order: Order): Manager? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun operator(order: Order): Operator? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 }
