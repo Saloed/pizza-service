@@ -6,6 +6,7 @@ import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import ru.spbstu.architectures.pizzaService.logic.ClientOrder
 import ru.spbstu.architectures.pizzaService.models.Client
 import ru.spbstu.architectures.pizzaService.models.Courier
 import ru.spbstu.architectures.pizzaService.models.Manager
@@ -44,6 +45,7 @@ fun Route.userPage() {
     get<ClientPage> {
         val user = call.userOrNull() ?: return@get call.redirect(Login())
         if (user !is Client) return@get call.redirect(UserPage(user.login))
+        val orders = ClientOrder.list(user)
 
         call.respond(
             FreeMarkerContent(
