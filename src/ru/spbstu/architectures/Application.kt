@@ -1,24 +1,21 @@
 package ru.spbstu.architectures
 
-import freemarker.cache.ClassTemplateLoader
 import io.ktor.application.Application
 import io.ktor.application.ApplicationStopped
+import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.*
-import io.ktor.freemarker.FreeMarker
 import io.ktor.gson.gson
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.cio.parseMultipart
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
+import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Locations
+import io.ktor.response.respond
 import io.ktor.routing.routing
 import io.ktor.server.netty.EngineMain
 import io.ktor.sessions.SessionTransportTransformerMessageAuthentication
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
-import org.slf4j.event.Level
 import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.utils.Hasher
 import ru.spbstu.architectures.pizzaService.web.Session
@@ -38,7 +35,15 @@ fun Application.module() {
 
     Hasher.init(config)
 
+    install(DefaultHeaders)
+    install(CallLogging)
+    install(ConditionalHeaders)
+    install(PartialContent)
+    install(Compression)
     install(Locations)
+    install(StatusPages) {
+        exception<NotImplementedError> { call.respond(HttpStatusCode.NotImplemented) }
+    }
 
     install(Sessions) {
         cookie<Session>("SESSION") {
@@ -46,11 +51,6 @@ fun Application.module() {
         }
     }
 
-    install(CallLogging) {
-        level = Level.INFO
-    }
-
-    install(ConditionalHeaders)
 
     install(CORS) {
         method(HttpMethod.Options)
@@ -62,38 +62,15 @@ fun Application.module() {
         anyHost() // @TODO: Don't do this in production if possible. Try to limit it.
     }
 
-    install(DataConversion)
 
-    install(DefaultHeaders) {
-        header("X-Engine", "Ktor") // will send this header with each response
+    install(ContentNegotiation) {
+        gson {
+            setPrettyPrinting()
+            serializeNulls()
+        }
     }
-
-//    install(ContentNegotiation) {
-//        gson {
-//            serializeNulls()
-//            setPrettyPrinting()
-//        }
-//    }
-
-    install(FreeMarker) {
-        templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
-    }
-
-//    // http://ktor.io/servers/features/https-redirect.html#testing
-//    if (!testing) {
-//        install(HttpsRedirect) {
-//            // The port to redirect to. By default 443, the default HTTPS port.
-//            sslPort = 443
-//            // 301 Moved Permanently, or 302 Found redirect.
-//            permanentRedirect = true
-//        }
-//    }
-
 
     routing {
-        static("static") {
-            resources("static")
-        }
         login()
         register()
         userPage()
