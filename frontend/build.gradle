@@ -1,28 +1,25 @@
 plugins {
     id "com.moowork.node" version "1.2.0"
-    }
+}
 
-     apply plugin: 'base'
-     apply plugin: "com.moowork.node"
+apply plugin: 'base'
+apply plugin: "com.moowork.node"
 
-      node {
-          version = "10.15.0"
-              download = true
-              }
+node {
+    version = "10.15.3"
+    download = true
+}
 
-               task bundle(type: NpmTask, dependsOn: npmInstall) {
-                   args = ['run', 'build']
-                   }
+task bundle(type: NpmTask, dependsOn: npmInstall) {
+    args = ['run', 'build']
+}
 
-                    assemble.dependsOn(bundle)
+assemble.dependsOn(bundle)
 
 
-                    
 task test(type: NpmTask) {
     environment = ['CI': 'true']
-        args = ['run', 'test']
-        }
+    args = ['run', 'test']
+}
 
-         check.dependsOn(test)
-
-         
+check.dependsOn(test)
