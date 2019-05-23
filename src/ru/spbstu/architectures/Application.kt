@@ -4,24 +4,23 @@ import io.ktor.application.Application
 import io.ktor.application.ApplicationStopped
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
+import io.ktor.auth.jwt.jwt
 import io.ktor.features.*
 import io.ktor.gson.gson
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Locations
+import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.netty.EngineMain
-import io.ktor.sessions.SessionTransportTransformerMessageAuthentication
-import io.ktor.sessions.Sessions
-import io.ktor.sessions.cookie
 import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.utils.Hasher
-import ru.spbstu.architectures.pizzaService.web.Session
-import ru.spbstu.architectures.pizzaService.web.login
-import ru.spbstu.architectures.pizzaService.web.register
-import ru.spbstu.architectures.pizzaService.web.userPage
+import ru.spbstu.architectures.pizzaService.web.*
 
 
 val config: ConfigurationFacade = ConfigurationFacadeDummy
@@ -45,9 +44,15 @@ fun Application.module() {
         exception<NotImplementedError> { call.respond(HttpStatusCode.NotImplemented) }
     }
 
-    install(Sessions) {
-        cookie<Session>("SESSION") {
-            transform(SessionTransportTransformerMessageAuthentication(config.secretKey))
+    val jwtTokenIssuer = JWTTokenIssuer(config)
+
+    install(Authentication) {
+        jwt {
+            verifier(jwtTokenIssuer.verifier)
+            realm = config.realm
+            validate {
+                it.payload.tokenParams()?.let { UserAuthorization.authorize(it) }
+            }
         }
     }
 
@@ -71,9 +76,19 @@ fun Application.module() {
     }
 
     routing {
-        login()
-        register()
-        userPage()
+        post("/authenticate") {
+            val credentials = call.receive<UserCredentials>()
+            val user = UserAuthorization.authenticate(credentials) ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Invalid username or password"
+            )
+            val token = jwtTokenIssuer.makeToken(user)
+            call.respond(token)
+        }
+        createClient()
+        authenticate {
+            createUser()
+        }
     }
 
 

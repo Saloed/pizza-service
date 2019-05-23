@@ -1,10 +1,7 @@
 package ru.spbstu.architectures.pizzaService.db
 
 import org.jetbrains.exposed.sql.Table
-
-enum class UserRoleType{
-    Client, Manager, Operator, Courier
-}
+import ru.spbstu.architectures.pizzaService.models.UserRoleType
 
 object UserTable : Table() {
     val id = integer("id").autoIncrement().primaryKey()

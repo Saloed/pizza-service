@@ -10,6 +10,8 @@ data class DbConfig(val host: String, val name: String, val user: String, val pa
 interface ConfigurationFacade {
     val secretKey: ByteArray
     val db: DbConfig
+    val tokenIssuer: String
+    val realm: String
 }
 
 object ConfigurationFacadeDummy : ConfigurationFacade {
@@ -23,4 +25,6 @@ object ConfigurationFacadeDummy : ConfigurationFacade {
         val password = dbProperties.getProperty("db.password")
         DbConfig(host, name, user, password)
     }
+    override val tokenIssuer = "my.awesome.token"
+    override val realm: String = "my.awesome.realm"
 }

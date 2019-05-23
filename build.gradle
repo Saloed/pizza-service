@@ -59,6 +59,7 @@ dependencies {
     compile "io.ktor:ktor-server-sessions:$ktor_version"
     compile "io.ktor:ktor-auth:$ktor_version"
     compile "io.ktor:ktor-gson:$ktor_version"
+    compile "io.ktor:ktor-auth-jwt:$ktor_version"
     compile "io.ktor:ktor-freemarker:$ktor_version"
     compile group: 'c3p0', name: 'c3p0', version: '0.9.1.2'
     compile("org.jetbrains.exposed:exposed:0.13.7") {

@@ -10,14 +10,14 @@ node {
     download = true
 }
 
-task bundle(type: NpmTask, dependsOn: npmInstall) {
+task bundle(type: YarnTask, dependsOn: yarn) {
     args = ['run', 'build']
 }
 
 assemble.dependsOn(bundle)
 
 
-task test(type: NpmTask) {
+task test(type: YarnTask) {
     environment = ['CI': 'true']
     args = ['run', 'test']
 }

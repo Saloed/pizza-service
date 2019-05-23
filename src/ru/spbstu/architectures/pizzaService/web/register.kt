@@ -1,83 +1,87 @@
 package ru.spbstu.architectures.pizzaService.web
 
-import io.ktor.application.application
-import io.ktor.application.call
-import io.ktor.application.log
-import io.ktor.freemarker.FreeMarkerContent
-import io.ktor.locations.Location
-import io.ktor.locations.get
-import io.ktor.locations.post
-import io.ktor.request.receiveParameters
+import io.ktor.application.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
-import ru.spbstu.architectures.pizzaService.db.UserRoleType
+import io.ktor.routing.post
 import ru.spbstu.architectures.pizzaService.logic.UserCreator
 import ru.spbstu.architectures.pizzaService.models.User
+import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.utils.Hasher
 import ru.spbstu.architectures.pizzaService.utils.UserValidator
-import ru.spbstu.architectures.pizzaService.utils.redirect
 import ru.spbstu.architectures.pizzaService.utils.userOrNull
 
-@Location("/register")
-data class Register(val login: String = "", val error: String = "")
+data class RegistrationForm(val login: String, val password: String)
 
-data class RegistrationForm(val login: String, val password: String, val roleType: String)
+data class RegistrationErrorResponse(val error: String)
 
-fun Route.register() {
+suspend fun createGenericUser(
+    call: ApplicationCall,
+    application: Application,
+    form: RegistrationForm,
+    userCreator: (login: String, password: String) -> User?
+) {
+    val error = when {
+        !UserValidator.passwordValid(form.password) -> "Password should be at least 6 characters long"
+        !UserValidator.loginValid(form.login) -> "Login should be at least 4 characters long and consists of digits, letters, dots or underscores"
+        User.manager.get(form.login) != null -> "User with the following login is already registered"
+        else -> null
+    }
+    if (error != null) {
+        val message = RegistrationErrorResponse(error)
+        return call.respond(HttpStatusCode.BadRequest, message)
+    }
 
-    post<Register> {
-        val currentUser = call.userOrNull()
-        val parameters = call.receiveParameters()
-        // todo: change to gson
-        println("$parameters")
-        val registration = RegistrationForm(
-            parameters["login"] ?: return@post call.redirect(Register(error = "Login required")),
-            parameters["password"] ?: return@post call.redirect(Register(error = "Password required")),
-            parameters["roleType"] ?: return@post call.redirect(Register(error = "Role required"))
-        )
+    val passwordHash = Hasher.hash(form.password)
+    val newUser = try {
+        userCreator(form.login, passwordHash)
+    } catch (e: Throwable) {
+        application.log.error("Failed to register user", e)
+        val error = "Failed to register"
+        val message = RegistrationErrorResponse(error)
+        return call.respond(HttpStatusCode.BadRequest, message)
+    }
 
-        val error = Register(registration.login)
+    if (newUser == null) {
+        val error = "Failed to register"
+        val message = RegistrationErrorResponse(error)
+        return call.respond(HttpStatusCode.BadRequest, message)
+    }
+    call.respond(HttpStatusCode.OK, RegistrationErrorResponse(""))
+}
 
-        when {
-            !UserValidator.passwordValid(registration.password) -> call.redirect(error.copy(error = "Password should be at least 6 characters long"))
-            !UserValidator.loginValid(registration.login) -> call.redirect(error.copy(error = "Login should be at least 4 characters long and consists of digits, letters, dots or underscores"))
-            User.manager.get(registration.login) != null -> call.redirect(error.copy(error = "User with the following login is already registered"))
-            else -> {
-                val passwordHash = Hasher.hash(registration.password)
-                val roleType = UserRoleType.valueOf(registration.roleType)
-                val newUser = try {
-                    UserCreator.create(currentUser, registration.login, passwordHash, roleType)
-                } catch (e: Throwable) {
-                    application.log.error("Failed to register user", e)
-                    return@post call.redirect(error.copy(error = "Failed to register"))
-                }
-                    ?: return@post call.redirect(error.copy(error = "Only manager can register user with role ${registration.roleType}"))
-
-
-                if (currentUser == null) {
-                    call.sessions.set(Session(newUser.login))
-                    call.redirect(UserPage(newUser.login))
-                }
-            }
+fun Route.createClient() {
+    post("/client") {
+        val form = call.receive<RegistrationForm>()
+        createGenericUser(call, application, form) { login, password ->
+            UserCreator.createClient(login, password)
         }
     }
+}
 
-    get<Register> {
-        val user = call.userOrNull()
-        if (user != null) return@get call.redirect(UserPage(user.login))
-        call.respond(
-            FreeMarkerContent(
-                "register.ftl",
-                mapOf(
-                    "login" to it.login,
-                    "error" to it.error,
-                    "roleTypes" to UserRoleType.values().map { it.name }.toList()
-                ),
-                ""
-            )
-        )
-
+fun Route.createUser() {
+    post("/manager") {
+        val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
+        val form = call.receive<RegistrationForm>()
+        createGenericUser(call, application, form) { login, password ->
+            UserCreator.create(user, login, password, UserRoleType.Manager)
+        }
+    }
+    post("/operator") {
+        val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
+        val form = call.receive<RegistrationForm>()
+        createGenericUser(call, application, form) { login, password ->
+            UserCreator.create(user, login, password, UserRoleType.Operator)
+        }
+    }
+    post("/courier") {
+        val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
+        val form = call.receive<RegistrationForm>()
+        createGenericUser(call, application, form) { login, password ->
+            UserCreator.create(user, login, password, UserRoleType.Courier)
+        }
     }
 }
+

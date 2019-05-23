@@ -1,17 +1,18 @@
 package ru.spbstu.architectures.pizzaService.logic
 
-import ru.spbstu.architectures.pizzaService.db.UserRoleType
+import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.models.*
 
 object UserCreator {
+    fun createClient(login: String, password: String): User? {
+        val client = Client(0, login, password, "")
+        return Client.manager.create(client)
+    }
+
     fun create(currentUser: User?, login: String, password: String, role: UserRoleType): User? {
-        if (role == UserRoleType.Client) {
-            val client = Client(0, login, password, "")
-            return Client.manager.create(client)
-        }
         if (currentUser !is Manager) return null
         return when (role) {
-            UserRoleType.Client -> throw IllegalStateException("Client case already checked")
+            UserRoleType.Client -> createClient(login, password)
             UserRoleType.Manager -> {
 
                 val manager = Manager(0, login, password, "")
