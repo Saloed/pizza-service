@@ -1,26 +1,24 @@
 import React from 'react';
-import { Admin, Resource } from 'react-admin';
+import {Admin, Resource} from 'react-admin';
 import restProvider from 'ra-data-simple-rest';
-import authProvider from './authProvider';
-import { List, Datagrid, Edit, Create, SimpleForm, DateField, TextField, EditButton, DisabledInput, TextInput, LongTextInput, DateInput } from 'react-admin';
-import {customRoutes} from './pages/routes';
-const PostTitle = ({  }) => {
-    return <span>Post </span>;
-};
+import authProvider, {httpClient} from './authProvider';
+import {ClientOrderList, ClientShow, ClientOrderShow, ClientOrderCreate} from './pages/client'
+import {PizzaList} from "./pages/pizza";
 
-export const Dummy = (props: any) => (
-    <Edit title={props.toString()} {...props}>
 
-    </Edit>
-);
+const dataProvider = restProvider('http://127.0.0.1:8080', httpClient);
 
-const dataProvider = restProvider('http://127.0.0.1:8080');
-const App = () => <Admin dataProvider={dataProvider} authProvider={authProvider} customRoutes={customRoutes} >
-    {(permissions: any)=> [
-        <Resource name="dummy" list={Dummy(permissions)} />,
-        permissions ? <Resource name="dummy" list={Dummy} /> : null,
+const App = () => <Admin dataProvider={dataProvider} authProvider={authProvider}>
+    <Resource name="client" show={ClientShow}/>
+    <Resource name={'order'} list={ClientOrderList} show={ClientOrderShow} create={ClientOrderCreate}/>
+    <Resource name={'pizza'} list={PizzaList}/>
 
-    ]}
 </Admin>;
 
 export default App;
+
+
+// {(permissions: any) => [
+//     permissions ? <Resource name="client" show={ClientShow}/> : null,
+//
+// ]}

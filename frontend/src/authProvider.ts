@@ -1,4 +1,4 @@
-import {AUTH_LOGIN, AUTH_LOGOUT, AUTH_ERROR, AUTH_GET_PERMISSIONS, AUTH_CHECK} from 'react-admin';
+import {AUTH_LOGIN, AUTH_LOGOUT, AUTH_ERROR, AUTH_GET_PERMISSIONS, AUTH_CHECK, fetchUtils} from 'react-admin';
 import decodeJwt from 'jwt-decode';
 
 enum UserRole {
@@ -90,3 +90,13 @@ export default (type: string, params: any) => {
     }
     return Promise.reject('Unknown method');
 };
+
+
+export const httpClient = (url: any, options: any = {}) => {
+    if (!options.headers) {
+        options.headers = new Headers({Accept: 'application/json'});
+    }
+    const token = localStorage.getItem('token');
+    options.headers.set('Authorization', `Bearer ${token}`);
+    return fetchUtils.fetchJson(url, options);
+}

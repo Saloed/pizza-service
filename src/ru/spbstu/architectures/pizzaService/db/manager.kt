@@ -3,6 +3,7 @@ package ru.spbstu.architectures.pizzaService.db
 import org.intellij.lang.annotations.Language
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.execAndMap
 
@@ -131,7 +132,9 @@ object CourierModelManager : UserRoleManager<Courier> {
 }
 
 object PizzaModelManager {
-
+    fun list() = Db.transaction {
+        PizzaTable.selectAll().map { Pizza(it[PizzaTable.id], it[PizzaTable.name]) }
+    }
 }
 
 object OrderModelManager {
@@ -158,7 +161,20 @@ object OrderModelManager {
     }
 
     fun pizza(order: Order): List<Pizza> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        @Language("PostgreSQL") val query = """
+        select
+        pz.id id,
+        pz.name pizza_name
+        from pizza pz
+        join order_pizza op on pz.id = op.pizza_id and op.order_id = ${order.id}
+    """.trimIndent()
+        return Db.transaction {
+            query.execAndMap {
+                it.run {
+                    Pizza(getInt("id"), getString("pizza_name"))
+                }
+            }
+        }
     }
 
     fun payment(order: Order): Payment? {

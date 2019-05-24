@@ -9,5 +9,11 @@ object ClientOrder {
         return Client.manager.orders(client)
     }
 
+    fun get(client: Client, id: Int): Order? {
+        val order = Order.manager.get(id) ?: return null
+        if (order.clientId != client.id) return null
+        return order
+    }
+
 }
 
