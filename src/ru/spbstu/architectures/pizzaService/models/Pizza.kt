@@ -1,12 +1,10 @@
 package ru.spbstu.architectures.pizzaService.models
 
-import ru.spbstu.architectures.pizzaService.db.PizzaModelManager
+import ru.spbstu.architectures.pizzaService.db.ModelManagerFactory
 
 data class Pizza(
     val id: Int,
     val name: String
-){
-    companion object{
-        val manager = PizzaModelManager
-    }
+) : Model<Pizza> {
+    companion object : ModelManagerFactory<Pizza>(Pizza::class.java)
 }

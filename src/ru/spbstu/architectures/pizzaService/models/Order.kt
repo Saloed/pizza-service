@@ -1,6 +1,7 @@
 package ru.spbstu.architectures.pizzaService.models
 
-import ru.spbstu.architectures.pizzaService.db.OrderModelManager
+import org.joda.time.DateTime
+import ru.spbstu.architectures.pizzaService.db.ModelManagerFactory
 
 enum class OrderStatus {
     NEW,
@@ -9,23 +10,29 @@ enum class OrderStatus {
     READY,
     SHIPPING,
     CLOSED,
-    DRAFT
+    CANCELED,
+    DRAFT;
+
+    companion object {
+        val forManager = listOf(APPROVED, PROCESSING, READY)
+        val forOperator = listOf(NEW)
+        val forCourier = listOf(READY, SHIPPING)
+    }
 }
 
 data class Order(
     val id: Int,
     val status: OrderStatus,
     val isActive: Boolean,
-    val clientId: Int
-) {
-    val orderManager: Manager? by lazy { manager.manager(this) }
-    val operator: Operator? by lazy { manager.operator(this) }
-    val payment: Payment? by lazy { manager.payment(this) }
+    val client: Client,
+    val manager: Manager?,
+    val operator: Operator?,
+    val courier: Courier?,
+    val payment: Payment?,
+    val createdAt: DateTime,
+    val updatedAt: DateTime
+) : Model<Order> {
 
-    val pizza: List<Pizza> by lazy { manager.pizza(this) }
-
-    companion object {
-        val manager = OrderModelManager
-    }
+    companion object : ModelManagerFactory<Order>(Order::class.java)
 }
 

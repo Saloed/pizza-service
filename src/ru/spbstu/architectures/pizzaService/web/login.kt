@@ -12,7 +12,7 @@ data class UserPrincipal(val user: User) : Principal
 
 
 object UserAuthorization {
-    fun authorize(tokenParams: UserTokenParams): Principal? {
+    suspend fun authorize(tokenParams: UserTokenParams): Principal? {
         val user = User.manager.get(tokenParams.login) ?: return null
         if (user.id != tokenParams.id) return null
         if (user.login != tokenParams.login) return null
@@ -20,7 +20,7 @@ object UserAuthorization {
         return UserPrincipal(user)
     }
 
-    fun authenticate(credentials: UserCredentials) =
+    suspend fun authenticate(credentials: UserCredentials) =
         User.manager.get(credentials.username, Hasher.hash(credentials.password))
 
 }

@@ -1,4 +1,4 @@
-package ru.spbstu.architectures.pizzaService.db
+package ru.spbstu.architectures.pizzaService.db.table
 
 import org.jetbrains.exposed.sql.Table
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
@@ -13,6 +13,7 @@ object UserTable : Table() {
 object ClientTable : Table() {
     val id = reference("id", UserTable.id).primaryKey()
     val address = text("address")
+    val phone = varchar("phone", 100)
 }
 
 object ManagerTable : Table() {

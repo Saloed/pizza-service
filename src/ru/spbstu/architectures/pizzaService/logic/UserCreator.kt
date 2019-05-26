@@ -4,27 +4,27 @@ import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.models.*
 
 object UserCreator {
-    fun createClient(login: String, password: String): User? {
-        val client = Client(0, login, password, "")
-        return Client.manager.create(client)
+    suspend fun createClient(login: String, password: String): User? {
+        val client = Client(0, login, password, "", "")
+        return Client.modelManager.create(client)
     }
 
-    fun create(currentUser: User?, login: String, password: String, role: UserRoleType): User? {
+    suspend fun create(currentUser: User?, login: String, password: String, role: UserRoleType): User? {
         if (currentUser !is Manager) return null
         return when (role) {
             UserRoleType.Client -> createClient(login, password)
             UserRoleType.Manager -> {
 
                 val manager = Manager(0, login, password, "")
-                Manager.manager.create(manager)
+                Manager.modelManager.create(manager)
             }
             UserRoleType.Operator -> {
                 val operator = Operator(0, login, password, -1)
-                Operator.manager.create(operator)
+                Operator.modelManager.create(operator)
             }
             UserRoleType.Courier -> {
                 val courier = Courier(0, login, password)
-                Courier.manager.create(courier)
+                Courier.modelManager.create(courier)
             }
         }
     }

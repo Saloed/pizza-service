@@ -21,7 +21,7 @@ suspend fun createGenericUser(
     call: ApplicationCall,
     application: Application,
     form: RegistrationForm,
-    userCreator: (login: String, password: String) -> User?
+    userCreator: suspend (login: String, password: String) -> User?
 ) {
     val error = when {
         !UserValidator.passwordValid(form.password) -> "Password should be at least 6 characters long"

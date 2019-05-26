@@ -1,5 +1,7 @@
 package ru.spbstu.architectures.pizzaService.db
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -7,7 +9,7 @@ import ru.spbstu.architectures.DbConfig
 
 object Db {
     private var initialized = false
-//    private val pool = ComboPooledDataSource()
+    //    private val pool = ComboPooledDataSource()
     private lateinit var myDatabase: Database
 
     val database: Database
@@ -34,7 +36,7 @@ object Db {
         initialized = false
     }
 
-    fun <T> transaction(statement: Transaction.() -> T): T {
-        return transaction(database, statement)
+    suspend fun <T> transaction(statement: Transaction.() -> T): T = withContext(Dispatchers.IO) {
+        transaction(database, statement)
     }
 }
