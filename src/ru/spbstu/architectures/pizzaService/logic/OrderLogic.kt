@@ -1,6 +1,5 @@
 package ru.spbstu.architectures.pizzaService.logic
 
-import com.sun.org.apache.xpath.internal.operations.Or
 import org.jetbrains.exposed.sql.Op
 import org.joda.time.DateTime
 import ru.spbstu.architectures.pizzaService.db.manager.activeOrders
@@ -8,10 +7,10 @@ import ru.spbstu.architectures.pizzaService.db.manager.addPizzaToOrder
 import ru.spbstu.architectures.pizzaService.db.manager.orders
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.MyResult
+import ru.spbstu.architectures.pizzaService.web.NotificationService
 
 
 private abstract class OrderTransition<T : User>(val from: List<OrderStatus>, val to: OrderStatus) {
-    constructor(vararg from: OrderStatus, to: OrderStatus) : this(from.asList(), to)
 
     fun match(user: User, order: Order, status: OrderStatus) =
         checkUserAccess(user, order) && order.status in from && status == to
@@ -231,6 +230,10 @@ object OrderLogic {
         val resultWithDate = result.copy(updatedAt = DateTime.now())
         Order.modelManager.update(resultWithDate)
         val resultWithPermission = get(user, resultWithDate.id)
+        NotificationService.notifyUpdateOrder(order.client.id, order.id)
+        order.manager?.id?.let { NotificationService.notifyUpdateOrder(it, order.id) }
+        order.operator?.id?.let { NotificationService.notifyUpdateOrder(it, order.id) }
+        order.courier?.id?.let { NotificationService.notifyUpdateOrder(it, order.id) }
         return MyResult.Success(resultWithPermission)
     }
 

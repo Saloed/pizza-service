@@ -1,9 +1,7 @@
 package ru.spbstu.architectures
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationStopped
-import io.ktor.application.call
-import io.ktor.application.install
+import com.google.gson.Gson
+import io.ktor.application.*
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.auth.jwt.jwt
@@ -17,9 +15,13 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.websocket.WebSockets
+import io.ktor.http.cio.websocket.Frame
 import io.ktor.server.netty.EngineMain
+import io.ktor.websocket.webSocket
 import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.utils.Hasher
+import ru.spbstu.architectures.pizzaService.utils.userOrNull
 import ru.spbstu.architectures.pizzaService.web.*
 
 
@@ -40,6 +42,7 @@ fun Application.module() {
     install(PartialContent)
     install(Compression)
     install(Locations)
+    install(WebSockets)
     install(StatusPages) {
         exception<NotImplementedError> { call.respond(HttpStatusCode.NotImplemented) }
     }
@@ -91,6 +94,21 @@ fun Application.module() {
             createUser()
             order()
             pizza()
+            webSocket("/notifications") {
+                val user = call.userOrNull ?: return@webSocket
+                log.info("User ${user.login} subscribed for notifications")
+                try {
+                    NotificationService.addChangeListener(user.id) { data ->
+                        val dataText = Gson().toJson(data)
+                        outgoing.send(Frame.Text(dataText))
+                    }
+                    while (true) {
+                        incoming.receiveOrNull() ?: break
+                    }
+                } finally {
+                    NotificationService.removeChangeListener(user.id)
+                }
+            }
         }
     }
 
