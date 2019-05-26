@@ -16,6 +16,7 @@ import {
 } from 'ra-core';
 
 import {Login} from 'react-admin'
+import App from "../App";
 
 interface Props {
     redirectTo?: string;
@@ -24,6 +25,8 @@ interface Props {
 interface FormData {
     username: string;
     password: string;
+    address: string;
+    phone: string;
 }
 
 interface EnhancedProps
@@ -60,20 +63,16 @@ const renderInput = ({
         fullWidth
     />
 );
-
-function userRegister(auth: any, redirect: any) {
-    console.log(auth, redirect)
+const register = (auth: FormData, dispatch: any, aaa: any) => {
+    dispatch(userLogin(auth, '/'));
 }
-
-const login = (auth: any, dispatch: any, formData: any) => dispatch(userRegister(auth, formData.redirectTo));
-
 const RegisterForm: SFC<Props & EnhancedProps> = ({
                                                       classes,
                                                       isLoading,
                                                       handleSubmit,
                                                       translate,
                                                   }) => (
-    <form onSubmit={handleSubmit(login)}>
+    <form onSubmit={handleSubmit(register)}>
         <div className={classes.form}>
             <div className={classes.input}>
                 <Field
@@ -92,6 +91,26 @@ const RegisterForm: SFC<Props & EnhancedProps> = ({
                     component={renderInput}
                     label={translate('ra.auth.password')}
                     type="password"
+                    disabled={isLoading}
+                />
+            </div>
+            <div className={classes.input}>
+                <Field
+                    autoFocus
+                    id="address"
+                    name="address"
+                    component={renderInput}
+                    label={'address'}
+                    disabled={isLoading}
+                />
+            </div>
+            <div className={classes.input}>
+                <Field
+                    autoFocus
+                    id="phone number"
+                    name="phone number"
+                    component={renderInput}
+                    label={"phone number"}
                     disabled={isLoading}
                 />
             </div>
@@ -122,7 +141,7 @@ const enhance = compose<Props & EnhancedProps, Props>(
     reduxForm({
         form: 'signUp',
         validate: (values: FormData, props: TranslationContextProps) => {
-            const errors = {username: '', password: ''};
+            const errors = {username: '', password: '', address: '', phone: ''};
             const {translate} = props;
             if (!values.username) {
                 errors.username = translate('ra.validation.required');
@@ -130,6 +149,13 @@ const enhance = compose<Props & EnhancedProps, Props>(
             if (!values.password) {
                 errors.password = translate('ra.validation.required');
             }
+            if (!values.address) {
+                errors.address = translate('ra.validation.required');
+            }
+            if (!values.phone) {
+                errors.phone = translate('ra.validation.required');
+            }
+
             return errors;
         },
     })
@@ -141,7 +167,4 @@ EnhancedRegisterForm.propTypes = {
     redirectTo: PropTypes.string,
 };
 
-export default EnhancedRegisterForm;
-
-
-export const ClientRegister = <Login loginForm={<EnhancedRegisterForm/>}/>
+export default EnhancedRegisterForm

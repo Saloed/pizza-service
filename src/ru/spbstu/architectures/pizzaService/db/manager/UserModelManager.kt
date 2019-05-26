@@ -18,6 +18,7 @@ object UserModelManager {
                     .select { UserTable.login.eq(userId) }
                     .singleOrNull { passwordHash == null || it[UserTable.password] == passwordHash }
                     ?: return@transaction null
+            println("User try to login: $user")
             return@transaction when (user[UserTable.role]) {
                 UserRoleType.Client -> user.buildClient()
                 UserRoleType.Manager -> user.buildManager()

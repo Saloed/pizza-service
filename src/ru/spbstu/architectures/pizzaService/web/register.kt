@@ -13,7 +13,35 @@ import ru.spbstu.architectures.pizzaService.utils.Hasher
 import ru.spbstu.architectures.pizzaService.utils.UserValidator
 import ru.spbstu.architectures.pizzaService.utils.userOrNull
 
-data class RegistrationForm(val login: String, val password: String)
+abstract class RegistrationForm {
+    abstract val username: String
+    abstract val password: String
+}
+
+data class ClientRegistrationForm(
+    override val username: String,
+    override val password: String,
+    val address: String,
+    val phone: String
+) : RegistrationForm()
+
+data class ManagerRegistrationForm(
+    override val username: String,
+    override val password: String,
+    val restaurant: String
+) : RegistrationForm()
+
+data class OperatorRegistrationForm(
+    override val username: String,
+    override val password: String,
+    val number: Int
+) : RegistrationForm()
+
+data class CourierRegistrationForm(
+    override val username: String,
+    override val password: String
+) : RegistrationForm()
+
 
 data class RegistrationErrorResponse(val error: String)
 
@@ -25,8 +53,8 @@ suspend fun createGenericUser(
 ) {
     val error = when {
         !UserValidator.passwordValid(form.password) -> "Password should be at least 6 characters long"
-        !UserValidator.loginValid(form.login) -> "Login should be at least 4 characters long and consists of digits, letters, dots or underscores"
-        User.manager.get(form.login) != null -> "User with the following login is already registered"
+        !UserValidator.loginValid(form.username) -> "Login should be at least 4 characters long and consists of digits, letters, dots or underscores"
+        User.manager.get(form.username) != null -> "User with the following login is already registered"
         else -> null
     }
     if (error != null) {
@@ -36,7 +64,7 @@ suspend fun createGenericUser(
 
     val passwordHash = Hasher.hash(form.password)
     val newUser = try {
-        userCreator(form.login, passwordHash)
+        userCreator(form.username, passwordHash)
     } catch (e: Throwable) {
         application.log.error("Failed to register user", e)
         val error = "Failed to register"
@@ -54,7 +82,7 @@ suspend fun createGenericUser(
 
 fun Route.createClient() {
     post("/client") {
-        val form = call.receive<RegistrationForm>()
+        val form = call.receive<ClientRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserCreator.createClient(login, password)
         }
@@ -64,21 +92,21 @@ fun Route.createClient() {
 fun Route.createUser() {
     post("/manager") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<RegistrationForm>()
+        val form = call.receive<ManagerRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserCreator.create(user, login, password, UserRoleType.Manager)
         }
     }
     post("/operator") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<RegistrationForm>()
+        val form = call.receive<OperatorRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserCreator.create(user, login, password, UserRoleType.Operator)
         }
     }
     post("/courier") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<RegistrationForm>()
+        val form = call.receive<CourierRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserCreator.create(user, login, password, UserRoleType.Courier)
         }

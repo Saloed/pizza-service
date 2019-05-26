@@ -23,20 +23,20 @@ class AuthToken {
     data: TokenData;
 
     constructor(token: string, data: TokenData) {
-        this.token = token
+        this.token = token;
         this.data = data
     }
 
 }
 
 function storeToken(token: AuthToken) {
-    localStorage.setItem('token', token.token)
+    localStorage.setItem('token', token.token);
     localStorage.setItem('authToken', JSON.stringify(token))
 }
 
 function getToken(): AuthToken | null {
-    let data = localStorage.getItem('authToken')
-    if (!data) return null
+    let data = localStorage.getItem('authToken');
+    if (!data) return null;
     return JSON.parse(data)
 }
 
@@ -47,13 +47,29 @@ function removeToken() {
 
 
 export default (type: string, params: any) => {
+    const paramSize = Object.keys(params).length
+    if (paramSize > 2 && type === AUTH_LOGIN) {
+        // registration
+        const request = new Request('http://127.0.0.1:8080/client', {
+            method: 'POST',
+            body: JSON.stringify(params),
+            headers: new Headers({'Content-Type': 'application/json'}),
+        });
+        return fetch(request)
+            .then((response: Response) => {
+                if (response.status < 200 || response.status >= 300) {
+                    throw new Error(response.statusText);
+                }
+                return response.json();
+            })
+    }
     if (type === AUTH_LOGIN) {
         const {username, password} = params;
         const request = new Request('http://127.0.0.1:8080/authenticate', {
             method: 'POST',
             body: JSON.stringify({username, password}),
             headers: new Headers({'Content-Type': 'application/json'}),
-        })
+        });
         return fetch(request)
             .then((response: Response) => {
                 if (response.status < 200 || response.status >= 300) {
@@ -62,19 +78,19 @@ export default (type: string, params: any) => {
                 return response.json();
             })
             .then((response: AuthResponse) => {
-                let token = response.token
+                let token = response.token;
                 const decodedToken = decodeJwt<TokenData>(token);
                 storeToken(new AuthToken(token, decodedToken))
             });
     }
     if (type === AUTH_LOGOUT) {
-        removeToken()
+        removeToken();
         return Promise.resolve();
     }
     if (type === AUTH_ERROR) {
         const status = params.status;
         if (status === 401 || status === 403) {
-            removeToken()
+            removeToken();
             return Promise.reject();
         }
         return Promise.resolve();
@@ -83,9 +99,9 @@ export default (type: string, params: any) => {
         return getToken() ? Promise.resolve() : Promise.reject();
     }
     if (type === AUTH_GET_PERMISSIONS) {
-        const token = getToken()
-        if (!token) return Promise.reject()
-        const role = token.data.role
+        const token = getToken();
+        if (!token) return Promise.reject();
+        const role = token.data.role;
         return role ? Promise.resolve(role) : Promise.reject();
     }
     return Promise.reject('Unknown method');
@@ -99,4 +115,4 @@ export const httpClient = (url: any, options: any = {}) => {
     const token = localStorage.getItem('token');
     options.headers.set('Authorization', `Bearer ${token}`);
     return fetchUtils.fetchJson(url, options);
-}
+};
