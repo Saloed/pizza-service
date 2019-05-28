@@ -1,6 +1,5 @@
 package ru.spbstu.architectures.pizzaService.models
 
-import ru.spbstu.architectures.pizzaService.db.ModelManagerFactory
 import ru.spbstu.architectures.pizzaService.db.manager.UserModelManager
 
 enum class UserRoleType {

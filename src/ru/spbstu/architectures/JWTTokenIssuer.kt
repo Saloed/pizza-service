@@ -13,7 +13,7 @@ data class UserTokenParams(val id: Int, val login: String, val role: String)
 
 data class Token(val token: String)
 
-class JWTTokenIssuer(config: ConfigurationFacade) {
+class JWTTokenIssuer(private val config: ConfigurationFacade) {
 
     private val algorithm = Algorithm.HMAC512(config.secretKey)
 

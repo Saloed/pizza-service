@@ -2,9 +2,9 @@ package ru.spbstu.architectures.pizzaService.db.manager
 
 import org.jetbrains.exposed.sql.*
 import ru.spbstu.architectures.pizzaService.db.*
-import ru.spbstu.architectures.pizzaService.db.table.ClientTable
 import ru.spbstu.architectures.pizzaService.db.table.OperatorTable
 import ru.spbstu.architectures.pizzaService.db.table.UserTable
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.models.Operator
 import ru.spbstu.architectures.pizzaService.models.OrderStatus
 import ru.spbstu.architectures.pizzaService.models.UserRoleType

@@ -4,8 +4,7 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.select
 import ru.spbstu.architectures.pizzaService.db.Db
-import ru.spbstu.architectures.pizzaService.db.ModelManager
-import ru.spbstu.architectures.pizzaService.db.table.ClientTable
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.db.table.PromoClientStatusTable
 import ru.spbstu.architectures.pizzaService.db.table.PromoClientTable
 import ru.spbstu.architectures.pizzaService.models.Promo

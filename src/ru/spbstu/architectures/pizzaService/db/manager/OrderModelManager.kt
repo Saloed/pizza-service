@@ -5,8 +5,9 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.insert
 import ru.spbstu.architectures.pizzaService.db.Db
-import ru.spbstu.architectures.pizzaService.db.ModelManager
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.db.table.OrderPizzaTable
+import ru.spbstu.architectures.pizzaService.external.list
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.*
 import java.sql.ResultSet
@@ -67,7 +68,7 @@ object OrderModelManager :
         )
     }
 
-    override suspend  fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) =
+    override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) =
         Db.transaction {
             @Language("PostgreSQL") val query = """select
   "order".id             order_id,
@@ -124,7 +125,7 @@ where ${where.toSQL()}
             query.execAndMap { it.buildOrder() }
         }
 
-    override suspend  fun update(model: Order): Order {
+    override suspend fun update(model: Order): Order {
         Db.transaction {
             @Language("PostgreSQL") val query = """
                 update "order"
@@ -137,12 +138,13 @@ where ${where.toSQL()}
                 updated_at =  ${model.updatedAt.toTimestamp()}
                 where id = ${model.id}
 """.trimIndent()
+            query.execAndMap { }.first()
         }
 
         return model
     }
 
-    override  suspend fun create(model: Order): Order =
+    override suspend fun create(model: Order): Order =
         Db.transaction {
             @Language("PostgreSQL") val query = """
                 insert into "order"
@@ -152,30 +154,26 @@ values (default, (select id from order_status where name = '${model.status.name.
             query.execAndMap { model.copy(id = it.getInt("id")) }.first()
         }
 
-    override  suspend fun get(id: Int): Order? = list {
+    override suspend fun get(id: Int): Order? = list {
         intColumn("order", "id").eq(id)
     }.firstOrNull()
 
 }
 
- suspend fun ModelManager<Order>.pizza(orderId: Int): List<Pizza> {
+suspend fun ModelManager<Order>.pizza(orderId: Int): List<Pizza> {
     @Language("PostgreSQL") val query = """
-        select
-        pz.id id,
-        pz.name pizza_name
-        from pizza pz
-        join order_pizza op on pz.id = op.pizza_id and op.order_id = ${orderId}
+        select pizza_id from order_pizza
+        where order_pizza.order_id = ${orderId}
     """.trimIndent()
-    return Db.transaction {
+    val pizzaIds = Db.transaction {
         query.execAndMap {
-            it.run {
-                Pizza(getInt("id"), getString("pizza_name"))
-            }
+            it.run { getInt("id") }
         }
     }
+    return Pizza.modelManager.list(pizzaIds)
 }
 
- suspend fun ModelManager<Order>.addPizzaToOrder(order: Order, pizza: List<Int>) = Db.transaction {
+suspend fun ModelManager<Order>.addPizzaToOrder(order: Order, pizza: List<Int>) = Db.transaction {
     pizza.forEach { pizzaId ->
         OrderPizzaTable.insert {
             it[OrderPizzaTable.orderId] = order.id

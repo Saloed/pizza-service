@@ -2,10 +2,10 @@ package ru.spbstu.architectures.pizzaService.db.manager
 
 import org.jetbrains.exposed.sql.*
 import ru.spbstu.architectures.pizzaService.db.*
-import ru.spbstu.architectures.pizzaService.db.table.ClientTable
 import ru.spbstu.architectures.pizzaService.db.table.CourierTable
 import ru.spbstu.architectures.pizzaService.db.table.UserTable
 import ru.spbstu.architectures.pizzaService.models.Courier
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.models.OrderStatus
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.utils.boolColumn

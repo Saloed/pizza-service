@@ -5,6 +5,7 @@ import ru.spbstu.architectures.pizzaService.db.*
 import ru.spbstu.architectures.pizzaService.db.table.ClientTable
 import ru.spbstu.architectures.pizzaService.db.table.UserTable
 import ru.spbstu.architectures.pizzaService.models.Client
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.utils.intColumn
 

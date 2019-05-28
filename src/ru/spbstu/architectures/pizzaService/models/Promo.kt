@@ -1,7 +1,6 @@
 package ru.spbstu.architectures.pizzaService.models
 
 import org.joda.time.DateTime
-import ru.spbstu.architectures.pizzaService.db.ModelManagerFactory
 import ru.spbstu.architectures.pizzaService.db.manager.listPromo
 
 enum class PromoStatus {

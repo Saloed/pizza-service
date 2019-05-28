@@ -1,7 +1,7 @@
 package ru.spbstu.architectures.pizzaService.logic
 
-import ru.spbstu.architectures.pizzaService.db.manager.all
 import ru.spbstu.architectures.pizzaService.db.manager.pizza
+import ru.spbstu.architectures.pizzaService.external.all
 import ru.spbstu.architectures.pizzaService.models.Order
 import ru.spbstu.architectures.pizzaService.models.Pizza
 import ru.spbstu.architectures.pizzaService.models.User

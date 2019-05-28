@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.select
 import ru.spbstu.architectures.pizzaService.db.Db
-import ru.spbstu.architectures.pizzaService.db.ModelManager
+import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.db.table.PaymentTable
 import ru.spbstu.architectures.pizzaService.db.table.PaymentTypeTable
 import ru.spbstu.architectures.pizzaService.models.Payment

@@ -5,18 +5,13 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
-import ru.spbstu.architectures.pizzaService.db.manager.all
-import ru.spbstu.architectures.pizzaService.logic.OrderLogic
 import ru.spbstu.architectures.pizzaService.logic.PizzaLogic
-import ru.spbstu.architectures.pizzaService.models.Pizza
 import ru.spbstu.architectures.pizzaService.utils.getListQueryParams
 import ru.spbstu.architectures.pizzaService.utils.responseListRange
 import ru.spbstu.architectures.pizzaService.utils.userOrNull
 
 
 data class PizzaListFilter(val orderId: Int?, val id: Int?)
-
-data class PizzaResponse(val id: Int, val name: String)
 
 fun Route.pizza() {
     get("/pizza") {
