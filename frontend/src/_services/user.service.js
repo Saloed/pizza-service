@@ -116,7 +116,7 @@ function handleResponse(response) {
 
 
 const fetchJson = (url, options) => {
-    return axios(url, {...options})
+    return axios(url, {...options, data: options.body})
         .then((response) => {
             if (response.status < 200 || response.status >= 300) {
                 return Promise.reject(
@@ -141,8 +141,10 @@ const httpClient = (url, options) => {
     let headers = options.headers;
     if (!headers) {
         headers = new Headers();
-        headers.Accept = 'application/json'
     }
+    headers.Accept = 'application/json'
+    headers["Content-Type"] = 'application/json'
+
     const authHeaders = authHeader();
     for (const k in authHeaders) {
         headers[k] = authHeaders[k];
@@ -164,7 +166,7 @@ function restApiAuthProvider(type, params) {
     if (type === AUTH_ERROR) {
         const status = params.status;
         if (status === 401 || status === 403) {
-            // logout();
+            logout();
             return Promise.reject();
         }
         return Promise.resolve();

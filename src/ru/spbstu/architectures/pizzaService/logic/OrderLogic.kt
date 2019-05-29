@@ -5,6 +5,7 @@ import org.joda.time.DateTime
 import ru.spbstu.architectures.pizzaService.db.manager.activeOrders
 import ru.spbstu.architectures.pizzaService.db.manager.addPizzaToOrder
 import ru.spbstu.architectures.pizzaService.db.manager.orders
+import ru.spbstu.architectures.pizzaService.external.list
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.MyResult
 import ru.spbstu.architectures.pizzaService.web.NotificationService
@@ -132,6 +133,7 @@ object OrderLogic {
     data class OrderWithPermission(
         val id: Int,
         val status: String,
+        val cost: Int?,
         val payment: OrderPaymentWithPermission?,
         val client: OrderClientWithPermission?,
         val operator: OrderOperatorWithPermission?,
@@ -150,7 +152,7 @@ object OrderLogic {
                 order.payment?.amount,
                 order.payment?.cardTransaction
             )
-            OrderWithPermission(order.id, order.status.name, payment, client, operator, manager, null)
+            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, null)
         }
         is Manager -> {
             val client = OrderClientWithPermission(order.client.address, order.client.phone)
@@ -165,7 +167,7 @@ object OrderLogic {
                 order.payment?.amount,
                 order.payment?.cardTransaction
             )
-            OrderWithPermission(order.id, order.status.name, payment, client, operator, manager, courier)
+            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, courier)
         }
         is Operator -> {
             val client = OrderClientWithPermission(order.client.address, order.client.phone)
@@ -179,14 +181,19 @@ object OrderLogic {
                 order.payment?.amount,
                 order.payment?.cardTransaction
             )
-            OrderWithPermission(order.id, order.status.name, payment, client, operator, manager, null)
+            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, null)
         }
         is Courier -> {
             val client = OrderClientWithPermission(order.client.address, order.client.phone)
             val manager = OrderManagerWithPermission(order.manager?.id, order.manager?.login, order.manager?.restaurant)
             val courier = OrderCourierWithPermission(order.courier?.id, order.courier?.login)
-
-            OrderWithPermission(order.id, order.status.name, null, client, null, manager, courier)
+            val payment = OrderPaymentWithPermission(
+                order.payment?.id,
+                order.payment?.type?.name,
+                order.payment?.amount,
+                order.payment?.cardTransaction
+            )
+            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, null, manager, courier)
         }
     }
 
@@ -210,7 +217,18 @@ object OrderLogic {
     suspend fun create(user: User, pizza: List<Int>): MyResult<OrderWithPermission?> {
         if (user !is Client) return MyResult.Error("Only client can create orders")
         if (pizza.isEmpty()) return MyResult.Error("Order pizza is empty")
-        val order = Order(0, OrderStatus.DRAFT, false, user, null, null, null, null, DateTime.now(), DateTime.now())
+        val dbPizza = Pizza.modelManager.list(pizza)
+        if (!dbPizza.map { it.id }.containsAll(pizza)) return MyResult.Error("Pizza list contains unknown items")
+        val pizzaCost = dbPizza.map { it.price }.sum()
+        val order = Order(
+            0,
+            OrderStatus.DRAFT,
+            pizzaCost,
+            false,
+            user,
+            null, null, null, null,
+            DateTime.now(), DateTime.now()
+        )
         val createdOrder = Order.modelManager.create(order)
         Order.modelManager.addPizzaToOrder(createdOrder, pizza)
         val result = get(user, createdOrder.id)

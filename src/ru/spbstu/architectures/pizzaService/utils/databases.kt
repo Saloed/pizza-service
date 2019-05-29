@@ -32,3 +32,5 @@ fun (SqlExpressionBuilder.() -> Op<Boolean>).toSQL() = this(SqlExpressionBuilder
 
 fun Timestamp.toDateTime() = DateTime(time)
 fun DateTime.toTimestamp() = Timestamp(millis)
+fun DateTime.toDb() = DateColumnType(time = true).nonNullValueToString(this)
+

@@ -30,6 +30,7 @@ create table if not exists public.order
     status_id   int     not null references order_status,
     is_active   boolean not null,
     client_id   int     not null references client,
+    cost        int default null,
     manager_id  int default null references manager,
     operator_id int default null references operator,
     courier_id  int default null references courier,

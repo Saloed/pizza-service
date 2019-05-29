@@ -41,8 +41,15 @@ const cardActionStyle = {
     float: 'right',
 };
 
-const newOrder = (order) => () => {
-    order.status = 'NEW'
+const processOrder = (order) => () => {
+    order.status = 'PROCESSING'
+    dataProvider(UPDATE, "order", {
+        data: order,
+        id: order.id
+    }).then(location.reload())
+}
+const readyOrder = (order) => () => {
+    order.status = 'READY'
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
@@ -53,47 +60,52 @@ const cancelOrder = (order) => () => {
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
-    }).then(location.reload())
+    }).then(location.replace('/#/order'))
 }
 
 
-function getClientOrderNewActions(order) {
+function getManagerOrderCancelActions(order) {
     return [
-        <UiButton color="primary" onClick={newOrder(order)}>Approve</UiButton>,
-    ]
-}
-
-function getClientOrderCancelActions(order) {
-    return [
-        <UiButton color="primary" onClick={cancelOrder(order)}>Cancel</UiButton>,
+        <UiButton color="primary" onClick={cancelOrder(order)}>Cancel</UiButton>
     ]
 }
 
 
-function getClientOrderActions(order) {
+function getManagerOrderApprovedActions(order) {
+    return [
+        <UiButton color="primary" onClick={processOrder(order)}>Process</UiButton>
+    ]
+}
+
+
+function getManagerOrderProcessingActions(order) {
+    return [
+        <UiButton color="primary" onClick={readyOrder(order)}>Ready</UiButton>
+    ]
+}
+
+function getManagerOrderActions(order) {
     console.log(order)
     let actions = []
-    if (order.status === 'DRAFT') actions.push(...getClientOrderNewActions(order))
+    if (order.status === 'APPROVED') actions.push(...getManagerOrderApprovedActions(order))
+    if (order.status === 'PROCESSING') actions.push(...getManagerOrderProcessingActions(order))
     const cancelStatus = [
-        'DRAFT',
-        'NEW',
         'APPROVED',
-        'PROCESSING',
-        'READY',
-        'SHIPPING'
+        'PROCESSING'
     ]
-    if (cancelStatus.includes(order.status)) actions.push(...getClientOrderCancelActions(order))
+    if (cancelStatus.includes(order.status)) actions.push(...getManagerOrderCancelActions(order))
     return actions
 }
+
 
 class ActionButtons extends React.Component {
     render() {
         if (!this.props.data) return (null)
-        return getClientOrderActions(this.props.data);
+        return getManagerOrderActions(this.props.data);
     }
 }
 
-const ClientOrderShowActions = ({basePath, data, resource}) => {
+const ManagerOrderShowActions = ({basePath, data, resource}) => {
     return (
         <UiCardActions style={cardActionStyle}>
             <ActionButtons data={data}/>
@@ -105,27 +117,33 @@ function renderOrderIsPayed(record, source) {
     return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
 }
 
-
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
 
-const ClientOrderShow = (props) => (
-    <Show title={'Order: ' + props.id} actions={<ClientOrderShowActions/>}{...props}>
+const ManagerOrderShow = (props) => (
+    <Show title={'Order: ' + props.id} actions={<ManagerOrderShowActions/>}{...props}>
         <SimpleShowLayout>
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
             <NumberField source={"cost"}/>
+            <TextField label={"Address"} source={"client.address"}/>
+            <TextField label={"Phone"} source={"client.phone"}/>
+            <TextField label={"Restaurant"} source={"manager.restaurant"}/>
             <ReferenceManyField label={"Pizza"} reference={"pizza"} target={"orderId"}>
                 <SingleFieldList>
                     <ChipField source="name"/>
                 </SingleFieldList>
             </ReferenceManyField>
-
+            <TextField source={"operator.login"}/>
+            <TextField source={"operator.number"}/>
+            <TextField source={"manager.login"}/>
+            <TextField source={"manager.restaurant"}/>
+            <TextField source={"courier.login"}/>
         </SimpleShowLayout>
     </Show>
 );
 
-const ClientOrderList = (props) => (
+const ManagerOrderList = (props) => (
     <List {...props} bulkActions={false}>
         <Datagrid rowClick="show">
             <TextField source="id"/>
@@ -136,30 +154,8 @@ const ClientOrderList = (props) => (
     </List>
 );
 
-class CreateOrderButton extends React.Component {
-    handleAction = () => {
-        const pizzaIds = this.props.selectedIds
-        dataProvider(CREATE, "order", {data: {pizza: pizzaIds}}).then(it => location.replace(`/#/order/${it.data.id}/show`))
-    };
-
-    render() {
-        return <Button variant="contained"
-                       color="primary"
-                       label={"New order"}
-                       onClick={this.handleAction}
-        />
-
-    }
-}
-
-const CreateOrderBulkActionButtons = (props) => (
-    <Fragment>
-        <CreateOrderButton {...props}/>
-    </Fragment>
-);
-
-export const PizzaList = (props) => {
-    return <List {...props} bulkActionButtons={<CreateOrderBulkActionButtons/>}>
+const PizzaList = (props) => {
+    return <List {...props} bulkActions={false}>
         <Datagrid>
             <TextField source="name"/>
             <ArrayField source="toppings">
@@ -186,7 +182,7 @@ const PizzaShow = (props) => (
     </Show>
 );
 
-export const ClientAdmin = () => {
+export const ManagerAdmin = () => {
     return (
         <Provider
             store={createAdminStore({
@@ -203,7 +199,7 @@ export const ClientAdmin = () => {
                 history={history}
                 title="Client"
             >
-                <Resource name={'order'} list={ClientOrderList} show={ClientOrderShow}/>
+                <Resource name={'order'} list={ManagerOrderList} show={ManagerOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
             </Admin>
         </Provider>

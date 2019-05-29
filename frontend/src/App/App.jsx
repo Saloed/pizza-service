@@ -5,7 +5,7 @@ import {connect} from 'react-redux';
 import {history} from '../_helpers';
 import {alertActions} from '../_actions';
 import {PrivateRouteDispatcher} from '../_components';
-import {HomePage, HomePage2, ClientAdmin} from '../HomePage';
+import {ClientAdmin, OperatorAdmin, CourierAdmin, ManagerAdmin} from '../HomePage';
 import {LoginPage} from '../LoginPage';
 import {RegisterPage} from '../RegisterPage';
 
@@ -31,7 +31,12 @@ class App extends React.Component {
                         }
                         <Router history={history}>
                             <div>
-                                <PrivateRouteDispatcher exact path="/" components={{Client: ClientAdmin, Other: HomePage2}}/>
+                                <PrivateRouteDispatcher exact path="/" components={{
+                                    Client: ClientAdmin,
+                                    Operator: OperatorAdmin,
+                                    Courier: CourierAdmin,
+                                    Manager: ManagerAdmin
+                                }}/>
                                 <Route path="/login" component={LoginPage}/>
                                 <Route path="/register" component={RegisterPage}/>
                             </div>

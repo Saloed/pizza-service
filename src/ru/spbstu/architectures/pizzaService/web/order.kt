@@ -6,7 +6,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.locations.post
+import io.ktor.locations.put
 import io.ktor.request.receive
+import io.ktor.request.receiveText
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
@@ -42,9 +44,9 @@ fun Route.order() {
     }
     post("/order") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Forbidden, "")
+        call.application.log.warn("client: $user")
         val form = call.receive<OrderCreateForm>()
-        val result = OrderLogic.create(user, form.pizza)
-        val res = when (result) {
+        val res = when (val result = OrderLogic.create(user, form.pizza)) {
             is MyResult.Error -> return@post call.respond(HttpStatusCode.BadRequest, result.message)
             is MyResult.Success -> result.data
         } ?: let {
@@ -53,17 +55,16 @@ fun Route.order() {
         }
         call.respond(res)
     }
-    post<SingleOrderRequest> {
-        val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Forbidden, "")
+    put<SingleOrderRequest> {
+        val user = call.userOrNull ?: return@put call.respond(HttpStatusCode.Forbidden, "")
         val form = call.receive<OrderModificationForm>()
         val status = OrderStatus.valueOf(form.status.toUpperCase())
-        val result = OrderLogic.change(user, it.id, status)
-        val res = when (result) {
-            is MyResult.Error -> return@post call.respond(HttpStatusCode.BadRequest, result.message)
+        val res = when (val result = OrderLogic.change(user, it.id, status)) {
+            is MyResult.Error -> return@put call.respond(HttpStatusCode.BadRequest, result.message)
             is MyResult.Success -> result.data
         } ?: let {
             call.application.log.error("Order not found after update")
-            return@post call.respond(HttpStatusCode.NotFound, "")
+            return@put call.respond(HttpStatusCode.NotFound, "")
         }
         call.respond(res)
     }

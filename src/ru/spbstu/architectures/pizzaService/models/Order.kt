@@ -22,6 +22,7 @@ enum class OrderStatus {
 data class Order(
     val id: Int,
     val status: OrderStatus,
+    val cost: Int,
     val isActive: Boolean,
     val client: Client,
     val manager: Manager?,

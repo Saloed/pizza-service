@@ -96,6 +96,7 @@ fun Application.module() {
             createUser()
             order()
             pizza()
+            payment()
             webSocket("/notifications") {
                 val user = call.userOrNull ?: return@webSocket
                 log.info("User ${user.login} subscribed for notifications")

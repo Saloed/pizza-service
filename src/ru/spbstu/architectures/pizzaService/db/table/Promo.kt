@@ -3,12 +3,12 @@ package ru.spbstu.architectures.pizzaService.db.table
 import org.jetbrains.exposed.sql.Table
 
 
-object PromoClientStatusTable : Table() {
+object PromoClientStatusTable : Table("promo_client_status") {
     val id = integer("id").autoIncrement().primaryKey()
     val name = varchar("name", 100)
 }
 
-object PromoStatusTable : Table() {
+object PromoStatusTable : Table("promo_status") {
     val id = integer("id").autoIncrement().primaryKey()
     val name = varchar("name", 100)
 }
@@ -23,7 +23,7 @@ object PromoTable : Table() {
 }
 
 
-object PromoClientTable : Table() {
+object PromoClientTable : Table("promo_client") {
     val promoId = reference("promo_id", PromoTable.id)
     val clientId = reference("client_id", ClientTable.id)
     val statusId = reference("status_id", PromoClientStatusTable.id)

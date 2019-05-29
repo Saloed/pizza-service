@@ -2,7 +2,7 @@ package ru.spbstu.architectures.pizzaService.db.table
 
 import org.jetbrains.exposed.sql.Table
 
-object PaymentTypeTable : Table() {
+object PaymentTypeTable : Table("payment_type") {
     val id = integer("id").autoIncrement().primaryKey()
     val name = varchar("name", 100)
 }

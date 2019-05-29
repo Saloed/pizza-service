@@ -25,7 +25,7 @@ object ExternalApiDbCache {
                 .singleOrNull()
         }
         val gson = Gson()
-        if (cachedData == null || cachedData.updatedAt.plusDays(2) < DateTime.now()) {
+        if (cachedData == null || cachedData.updatedAt.plusDays(7) < DateTime.now()) {
             val newData = onExpired()
             val dataStr = gson.toJson(newData)
             if (cachedData == null) {

@@ -1,4 +1,4 @@
 export {ClientAdmin} from "./ClientAdmin";
-
-export * from './HomePage';
-export * from './HomePage2';
+export {OperatorAdmin} from './OperatorAdmin'
+export {CourierAdmin} from './CourierAdmin'
+export {ManagerAdmin} from './ManagerAdmin'

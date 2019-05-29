@@ -13,8 +13,8 @@ object PizzaModelManager : ModelManager<Pizza> {
     suspend fun qetPizzaFromApi(ids: List<Int> = emptyList()): List<Pizza> {
         val data = PizzaApi.query()
         val pizza = data.map {
-            val toppings = it.Toppings.map { PizzaTopping(it.ID, it.Name) }
-            Pizza(it.ID, it.Name, toppings)
+            val toppings = it.toppings.map { PizzaTopping(it.id, it.name) }
+            Pizza(it.id, it.name, it.price, it.imageUrl, toppings)
         }
         if (ids.isEmpty()) return pizza
         val idSet = ids.toSet()

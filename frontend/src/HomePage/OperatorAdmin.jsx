@@ -41,59 +41,44 @@ const cardActionStyle = {
     float: 'right',
 };
 
-const newOrder = (order) => () => {
-    order.status = 'NEW'
+const approveOrder = (order) => () => {
+    order.status = 'APPROVED'
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
-    }).then(location.reload())
+    }).then(location.replace('/#/order'))
 }
 const cancelOrder = (order) => () => {
     order.status = 'CANCELED'
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
-    }).then(location.reload())
+    }).then(location.replace('/#/order'))
 }
 
 
-function getClientOrderNewActions(order) {
+function getOperatorOrderNewActions(order) {
     return [
-        <UiButton color="primary" onClick={newOrder(order)}>Approve</UiButton>,
+        <UiButton color="primary" onClick={approveOrder(order)}>Approve</UiButton>,
+        <UiButton color="primary" onClick={cancelOrder(order)}>Cancel</UiButton>
     ]
 }
 
-function getClientOrderCancelActions(order) {
-    return [
-        <UiButton color="primary" onClick={cancelOrder(order)}>Cancel</UiButton>,
-    ]
-}
-
-
-function getClientOrderActions(order) {
+function getOperatorOrderActions(order) {
     console.log(order)
     let actions = []
-    if (order.status === 'DRAFT') actions.push(...getClientOrderNewActions(order))
-    const cancelStatus = [
-        'DRAFT',
-        'NEW',
-        'APPROVED',
-        'PROCESSING',
-        'READY',
-        'SHIPPING'
-    ]
-    if (cancelStatus.includes(order.status)) actions.push(...getClientOrderCancelActions(order))
+    if (order.status === 'NEW') actions.push(...getOperatorOrderNewActions(order))
     return actions
 }
 
 class ActionButtons extends React.Component {
     render() {
         if (!this.props.data) return (null)
-        return getClientOrderActions(this.props.data);
+        return getOperatorOrderActions(this.props.data);
     }
 }
 
-const ClientOrderShowActions = ({basePath, data, resource}) => {
+const OperatorOrderShowActions = ({basePath, data, resource}) => {
     return (
         <UiCardActions style={cardActionStyle}>
             <ActionButtons data={data}/>
@@ -105,27 +90,32 @@ function renderOrderIsPayed(record, source) {
     return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
 }
 
-
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
 
-const ClientOrderShow = (props) => (
-    <Show title={'Order: ' + props.id} actions={<ClientOrderShowActions/>}{...props}>
+const OperatorOrderShow = (props) => (
+    <Show title={'Order: ' + props.id} actions={<OperatorOrderShowActions/>}{...props}>
         <SimpleShowLayout>
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
             <NumberField source={"cost"}/>
+            <TextField label={"Address"} source={"client.address"}/>
+            <TextField label={"Phone"} source={"client.phone"}/>
+            <TextField label={"Restaurant"} source={"manager.restaurant"}/>
             <ReferenceManyField label={"Pizza"} reference={"pizza"} target={"orderId"}>
                 <SingleFieldList>
                     <ChipField source="name"/>
                 </SingleFieldList>
             </ReferenceManyField>
-
+            <TextField source={"operator.login"}/>
+            <TextField source={"operator.number"}/>
+            <TextField source={"manager.login"}/>
+            <TextField source={"manager.restaurant"}/>
         </SimpleShowLayout>
     </Show>
 );
 
-const ClientOrderList = (props) => (
+const OperatorOrderList = (props) => (
     <List {...props} bulkActions={false}>
         <Datagrid rowClick="show">
             <TextField source="id"/>
@@ -136,30 +126,8 @@ const ClientOrderList = (props) => (
     </List>
 );
 
-class CreateOrderButton extends React.Component {
-    handleAction = () => {
-        const pizzaIds = this.props.selectedIds
-        dataProvider(CREATE, "order", {data: {pizza: pizzaIds}}).then(it => location.replace(`/#/order/${it.data.id}/show`))
-    };
-
-    render() {
-        return <Button variant="contained"
-                       color="primary"
-                       label={"New order"}
-                       onClick={this.handleAction}
-        />
-
-    }
-}
-
-const CreateOrderBulkActionButtons = (props) => (
-    <Fragment>
-        <CreateOrderButton {...props}/>
-    </Fragment>
-);
-
-export const PizzaList = (props) => {
-    return <List {...props} bulkActionButtons={<CreateOrderBulkActionButtons/>}>
+const PizzaList = (props) => {
+    return <List {...props} bulkActions={false}>
         <Datagrid>
             <TextField source="name"/>
             <ArrayField source="toppings">
@@ -186,7 +154,7 @@ const PizzaShow = (props) => (
     </Show>
 );
 
-export const ClientAdmin = () => {
+export const OperatorAdmin = () => {
     return (
         <Provider
             store={createAdminStore({
@@ -203,7 +171,7 @@ export const ClientAdmin = () => {
                 history={history}
                 title="Client"
             >
-                <Resource name={'order'} list={ClientOrderList} show={ClientOrderShow}/>
+                <Resource name={'order'} list={OperatorOrderList} show={OperatorOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
             </Admin>
         </Provider>

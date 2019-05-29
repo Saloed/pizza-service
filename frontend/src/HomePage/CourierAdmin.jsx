@@ -26,6 +26,8 @@ import {
     CREATE, UPDATE
 } from 'react-admin';
 
+import PaymentCreateButton from './PaymentCreateButton'
+
 // side effects
 const authProvider = userService.restApiAuthProvider;
 const dataProvider = userService.restApiDtaProvider();
@@ -41,59 +43,61 @@ const cardActionStyle = {
     float: 'right',
 };
 
-const newOrder = (order) => () => {
-    order.status = 'NEW'
+const shipOrder = (order) => () => {
+    order.status = 'SHIPPING'
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
     }).then(location.reload())
 }
-const cancelOrder = (order) => () => {
-    order.status = 'CANCELED'
+const closeOrder = (order) => () => {
+    order.status = 'CLOSED'
     dataProvider(UPDATE, "order", {
         data: order,
         id: order.id
-    }).then(location.reload())
+    }).then(location.replace('/#/order'))
 }
 
+const addOrderPayment = (order) => () => {
+    console.log('payment')
+    console.log(order)
+}
 
-function getClientOrderNewActions(order) {
+function getOperatorOrderShippingActions(order) {
+    if (!!order.payment.id) {
+        return [
+            <UiButton color="primary" onClick={closeOrder(order)}>Close</UiButton>
+        ]
+    } else {
+        return [
+            <PaymentCreateButton />
+        ]
+    }
+}
+
+function getCourierOrderReadyActions(order) {
     return [
-        <UiButton color="primary" onClick={newOrder(order)}>Approve</UiButton>,
+        <UiButton color="primary" onClick={shipOrder(order)}>Deliver</UiButton>,
     ]
 }
 
-function getClientOrderCancelActions(order) {
-    return [
-        <UiButton color="primary" onClick={cancelOrder(order)}>Cancel</UiButton>,
-    ]
-}
 
-
-function getClientOrderActions(order) {
+function getCourierOrderActions(order) {
     console.log(order)
     let actions = []
-    if (order.status === 'DRAFT') actions.push(...getClientOrderNewActions(order))
-    const cancelStatus = [
-        'DRAFT',
-        'NEW',
-        'APPROVED',
-        'PROCESSING',
-        'READY',
-        'SHIPPING'
-    ]
-    if (cancelStatus.includes(order.status)) actions.push(...getClientOrderCancelActions(order))
+    if (order.status === 'READY') actions.push(...getCourierOrderReadyActions(order))
+    if (order.status === 'SHIPPING') actions.push(...getOperatorOrderShippingActions(order))
     return actions
 }
 
 class ActionButtons extends React.Component {
     render() {
         if (!this.props.data) return (null)
-        return getClientOrderActions(this.props.data);
+        return getCourierOrderActions(this.props.data);
     }
 }
 
-const ClientOrderShowActions = ({basePath, data, resource}) => {
+const CourierOrderShowActions = ({basePath, data, resource}) => {
     return (
         <UiCardActions style={cardActionStyle}>
             <ActionButtons data={data}/>
@@ -105,16 +109,18 @@ function renderOrderIsPayed(record, source) {
     return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
 }
 
-
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
 
-const ClientOrderShow = (props) => (
-    <Show title={'Order: ' + props.id} actions={<ClientOrderShowActions/>}{...props}>
+const CourierOrderShow = (props) => (
+    <Show title={'Order: ' + props.id} actions={<CourierOrderShowActions/>}{...props}>
         <SimpleShowLayout>
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
             <NumberField source={"cost"}/>
+            <TextField label={"Address"} source={"client.address"}/>
+            <TextField label={"Phone"} source={"client.phone"}/>
+            <TextField label={"Restaurant"} source={"manager.restaurant"}/>
             <ReferenceManyField label={"Pizza"} reference={"pizza"} target={"orderId"}>
                 <SingleFieldList>
                     <ChipField source="name"/>
@@ -125,7 +131,7 @@ const ClientOrderShow = (props) => (
     </Show>
 );
 
-const ClientOrderList = (props) => (
+const CourierOrderList = (props) => (
     <List {...props} bulkActions={false}>
         <Datagrid rowClick="show">
             <TextField source="id"/>
@@ -136,30 +142,8 @@ const ClientOrderList = (props) => (
     </List>
 );
 
-class CreateOrderButton extends React.Component {
-    handleAction = () => {
-        const pizzaIds = this.props.selectedIds
-        dataProvider(CREATE, "order", {data: {pizza: pizzaIds}}).then(it => location.replace(`/#/order/${it.data.id}/show`))
-    };
-
-    render() {
-        return <Button variant="contained"
-                       color="primary"
-                       label={"New order"}
-                       onClick={this.handleAction}
-        />
-
-    }
-}
-
-const CreateOrderBulkActionButtons = (props) => (
-    <Fragment>
-        <CreateOrderButton {...props}/>
-    </Fragment>
-);
-
-export const PizzaList = (props) => {
-    return <List {...props} bulkActionButtons={<CreateOrderBulkActionButtons/>}>
+const PizzaList = (props) => {
+    return <List {...props} bulkActions={false}>
         <Datagrid>
             <TextField source="name"/>
             <ArrayField source="toppings">
@@ -186,7 +170,7 @@ const PizzaShow = (props) => (
     </Show>
 );
 
-export const ClientAdmin = () => {
+export const CourierAdmin = () => {
     return (
         <Provider
             store={createAdminStore({
@@ -203,7 +187,7 @@ export const ClientAdmin = () => {
                 history={history}
                 title="Client"
             >
-                <Resource name={'order'} list={ClientOrderList} show={ClientOrderShow}/>
+                <Resource name={'order'} list={CourierOrderList} show={CourierOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
             </Admin>
         </Provider>
