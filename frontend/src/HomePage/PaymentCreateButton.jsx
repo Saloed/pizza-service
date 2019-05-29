@@ -31,6 +31,7 @@ const dataProvider = userService.restApiDtaProvider();
 class PaymentCreateButton extends Component {
     constructor(props) {
         super(props);
+        this.order = props.order
     }
 
     state = {
@@ -64,34 +65,17 @@ class PaymentCreateButton extends Component {
         } = this.props;
 
         // Dispatch an action letting react-admin know a API call is ongoing
-        fetchStart();
-        console.log(values)
-
+        values.orderId = this.order.id
 
         // As we want to know when the new post has been created in order to close the modal, we use the
         // dataProvider directly
-        dataProvider(CREATE, 'posts', {data: values})
+        dataProvider(CREATE, 'payment', {data: values})
             .then(({data}) => {
-                // Refresh the choices of the ReferenceInput to ensure our newly created post
-                // always appear, even after selecting another post
-                crudGetMatching(
-                    'posts',
-                    'comments@post_id',
-                    {page: 1, perPage: 25},
-                    {field: 'id', order: 'DESC'},
-                    {}
-                );
-
-                // Update the main react-admin form (in this case, the comments creation form)
-                change(REDUX_FORM_NAME, 'post_id', data.id);
                 this.setState({showDialog: false});
+                location.reload()
             })
             .catch(error => {
                 showNotification(error.message, 'error');
-            })
-            .finally(() => {
-                // Dispatch an action letting react-admin know a API call has ended
-                fetchEnd();
             });
     };
 

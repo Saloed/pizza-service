@@ -247,7 +247,7 @@ object OrderLogic {
         }
         val resultWithDate = result.copy(updatedAt = DateTime.now())
         Order.modelManager.update(resultWithDate)
-        val resultWithPermission = get(user, resultWithDate.id)
+        val resultWithPermission = sanitizeOrder(user, resultWithDate)
         NotificationService.notifyUpdateOrder(order.client.id, order.id)
         order.manager?.id?.let { NotificationService.notifyUpdateOrder(it, order.id) }
         order.operator?.id?.let { NotificationService.notifyUpdateOrder(it, order.id) }

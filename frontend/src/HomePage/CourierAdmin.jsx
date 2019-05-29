@@ -58,10 +58,6 @@ const closeOrder = (order) => () => {
     }).then(location.replace('/#/order'))
 }
 
-const addOrderPayment = (order) => () => {
-    console.log('payment')
-    console.log(order)
-}
 
 function getOperatorOrderShippingActions(order) {
     if (!!order.payment.id) {
@@ -70,7 +66,7 @@ function getOperatorOrderShippingActions(order) {
         ]
     } else {
         return [
-            <PaymentCreateButton />
+            <PaymentCreateButton order={order}/>
         ]
     }
 }
