@@ -2,12 +2,12 @@ package ru.spbstu.architectures.pizzaService.db.table
 
 import org.jetbrains.exposed.sql.Table
 
-object OrderStatusTable: Table("order_status"){
+object OrderStatusTable : Table("order_status") {
     val id = integer("id").primaryKey().autoIncrement()
     val name = varchar("name", 100)
 }
 
-object OrderTable: Table(){
+object OrderTable : Table() {
     val id = integer("id").primaryKey().autoIncrement()
     val statusId = reference("status_id", OrderStatusTable.id)
     val isActive = bool("is_active")

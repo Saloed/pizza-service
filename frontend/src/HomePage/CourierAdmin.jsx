@@ -181,7 +181,7 @@ export const CourierAdmin = () => {
                 dataProvider={dataProvider}
                 authProvider={authProvider}
                 history={history}
-                title="Client"
+                title="Courier"
             >
                 <Resource name={'order'} list={CourierOrderList} show={CourierOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>

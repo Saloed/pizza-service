@@ -5,13 +5,12 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import io.ktor.routing.get
 import io.ktor.routing.post
-import ru.spbstu.architectures.pizzaService.logic.UserCreator
+import ru.spbstu.architectures.pizzaService.logic.UserLogic
 import ru.spbstu.architectures.pizzaService.models.User
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
-import ru.spbstu.architectures.pizzaService.utils.Hasher
-import ru.spbstu.architectures.pizzaService.utils.UserValidator
-import ru.spbstu.architectures.pizzaService.utils.userOrNull
+import ru.spbstu.architectures.pizzaService.utils.*
 
 abstract class RegistrationForm {
     abstract val username: String
@@ -43,7 +42,7 @@ data class CourierRegistrationForm(
 ) : RegistrationForm()
 
 
-data class RegistrationErrorResponse(val error: String)
+data class RegistrationErrorResponse(val message: String)
 
 suspend fun createGenericUser(
     call: ApplicationCall,
@@ -84,7 +83,7 @@ fun Route.createClient() {
     post("/client") {
         val form = call.receive<ClientRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
-            UserCreator.createClient(login, password)
+            UserLogic.createClient(login, password)
         }
     }
 }
@@ -94,22 +93,30 @@ fun Route.createUser() {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
         val form = call.receive<ManagerRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
-            UserCreator.create(user, login, password, UserRoleType.Manager)
+            UserLogic.create(user, login, password, UserRoleType.Manager)
         }
     }
     post("/operator") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
         val form = call.receive<OperatorRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
-            UserCreator.create(user, login, password, UserRoleType.Operator)
+            UserLogic.create(user, login, password, UserRoleType.Operator)
         }
     }
     post("/courier") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
         val form = call.receive<CourierRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
-            UserCreator.create(user, login, password, UserRoleType.Courier)
+            UserLogic.create(user, login, password, UserRoleType.Courier)
         }
+    }
+}
+
+fun Route.listClients() {
+    get("/client") {
+        val user = call.userOrNull ?: return@get call.respond(HttpStatusCode.Unauthorized, "")
+        val result = UserLogic.listClients(user)
+        call.respondMyResult(result)
     }
 }
 

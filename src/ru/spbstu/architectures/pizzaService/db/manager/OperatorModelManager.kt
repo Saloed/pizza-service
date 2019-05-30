@@ -1,7 +1,7 @@
 package ru.spbstu.architectures.pizzaService.db.manager
 
 import org.jetbrains.exposed.sql.*
-import ru.spbstu.architectures.pizzaService.db.*
+import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.db.table.OperatorTable
 import ru.spbstu.architectures.pizzaService.db.table.UserTable
 import ru.spbstu.architectures.pizzaService.models.ModelManager
@@ -55,4 +55,10 @@ suspend fun ModelManager<Operator>.activeOrders(operator: Operator) =
             .and(boolColumn("order", "is_active"))
             .and(stringColumn("order_status", "name").inList(OrderStatus.forOperator.map { it.name.toLowerCase() }))
     }
+
+
+
+suspend fun ModelManager<Operator>.getForIds(ids: List<Int>) = list {
+    OperatorTable.id inList ids
+}
 

@@ -29,6 +29,7 @@ data class Order(
     val operator: Operator?,
     val courier: Courier?,
     val payment: Payment?,
+    val promo: Promo?,
     val createdAt: DateTime,
     val updatedAt: DateTime
 ) : Model<Order> {

@@ -169,7 +169,7 @@ export const OperatorAdmin = () => {
                 dataProvider={dataProvider}
                 authProvider={authProvider}
                 history={history}
-                title="Client"
+                title="Operator"
             >
                 <Resource name={'order'} list={OperatorOrderList} show={OperatorOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>

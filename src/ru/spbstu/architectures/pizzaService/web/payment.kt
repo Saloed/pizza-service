@@ -9,6 +9,7 @@ import io.ktor.routing.Route
 import io.ktor.routing.post
 import ru.spbstu.architectures.pizzaService.logic.PaymentLogic
 import ru.spbstu.architectures.pizzaService.utils.MyResult
+import ru.spbstu.architectures.pizzaService.utils.respondMyResult
 import ru.spbstu.architectures.pizzaService.utils.userOrNull
 
 data class PaymentCreateForm(val orderId: Int, val type: String, val amount: Int, val transaction: String?)
@@ -17,10 +18,7 @@ fun Route.payment() {
     post("/payment") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Forbidden, "")
         val form = call.receive<PaymentCreateForm>()
-        val res = when (val result = PaymentLogic.create(user, form)) {
-            is MyResult.Error -> return@post call.respond(HttpStatusCode.BadRequest, result.message)
-            is MyResult.Success -> result.data
-        }
-        call.respond(res)
+        val result = PaymentLogic.create(user, form)
+        call.respondMyResult(result)
     }
 }

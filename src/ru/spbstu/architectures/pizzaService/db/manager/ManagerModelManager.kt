@@ -67,3 +67,9 @@ suspend fun ModelManager<Manager>.activeOrders(manager: Manager) =
             .and(boolColumn("order", "is_active"))
             .and(stringColumn("order_status", "name").inList(OrderStatus.forManager.map { it.name.toLowerCase() }))
     }
+
+
+suspend fun ModelManager<Manager>.getForIds(ids: List<Int>) = list {
+    ManagerTable.id inList ids
+}
+

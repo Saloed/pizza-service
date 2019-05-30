@@ -2,22 +2,29 @@ package ru.spbstu.architectures.pizzaService.logic
 
 import org.jetbrains.exposed.sql.Op
 import org.joda.time.DateTime
-import ru.spbstu.architectures.pizzaService.db.manager.activeOrders
-import ru.spbstu.architectures.pizzaService.db.manager.addPizzaToOrder
-import ru.spbstu.architectures.pizzaService.db.manager.orders
+import ru.spbstu.architectures.pizzaService.db.manager.*
 import ru.spbstu.architectures.pizzaService.external.list
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.MyResult
 import ru.spbstu.architectures.pizzaService.web.NotificationService
 
+data class OrderModification(val status: OrderStatus, val promoId: Int?)
 
 private abstract class OrderTransition<T : User>(val from: List<OrderStatus>, val to: OrderStatus) {
 
-    fun match(user: User, order: Order, status: OrderStatus) =
-        checkUserAccess(user, order) && order.status in from && status == to
+    fun match(user: User, order: Order, modification: OrderModification) =
+        checkUserAccess(user, order)
+                && order.status in from
+                && modification.status == to
+                && additionalChecks(user, order, modification)
 
     abstract fun checkUserAccess(user: User, order: Order): Boolean
-    abstract suspend fun apply(user: User, order: Order): MyResult<Order>
+    open fun additionalChecks(user: User, order: Order, modification: OrderModification) = true
+    abstract suspend fun apply(
+        user: User,
+        order: Order,
+        modification: OrderModification
+    ): MyResult<Order>
 
     companion object {
         fun success(order: Order) = MyResult.Success(order)
@@ -47,6 +54,27 @@ private abstract class CourierOrderTransition(vararg from: OrderStatus, to: Orde
 
 
 private val transitions = listOf(
+    object : ClientOrderTransition(OrderStatus.DRAFT, to = OrderStatus.DRAFT) {
+        override fun additionalChecks(user: User, order: Order, modification: OrderModification) =
+            modification.promoId != null
+
+        override suspend fun apply(user: User, order: Order, modification: OrderModification): MyResult<Order> {
+            val promo = Promo.modelManager.listForClient(user as Client)
+                .find { it.id == modification.promoId }
+                ?: return fail("No promo available")
+
+            Promo.modelManager.setForOrder(order.id, promo)
+            val orderWithPromo = order.copy(promo = promo)
+            val fullCost = Order.modelManager.pizza(order.id).map { it.price }.sum()
+            val newCost = when (promo.effect) {
+                PromoEffect.DISCOUNT_5 -> (fullCost * 0.95).toInt()
+                PromoEffect.DISCOUNT_10 -> (fullCost * 0.9).toInt()
+                PromoEffect.DISCOUNT_15 -> (fullCost * 0.85).toInt()
+            }
+            return success(orderWithPromo.copy(cost = newCost))
+        }
+
+    },
     object : ClientOrderTransition(OrderStatus.DRAFT, to = OrderStatus.NEW) {
         suspend fun findOperator(): Operator {
             val operators = Operator.modelManager.list { Op.TRUE }
@@ -58,7 +86,11 @@ private val transitions = listOf(
             return managers.random()
         }
 
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             val operator = findOperator()
             val manager = findManager()
             return success(order.copy(status = to, operator = operator, manager = manager, isActive = true))
@@ -73,22 +105,38 @@ private val transitions = listOf(
         OrderStatus.SHIPPING,
         to = OrderStatus.CANCELED
     ) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(isActive = false, status = to))
         }
     },
     object : OperatorOrderTransition(OrderStatus.NEW, to = OrderStatus.APPROVED) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(status = to))
         }
     },
     object : OperatorOrderTransition(OrderStatus.NEW, to = OrderStatus.CANCELED) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(status = to, isActive = false))
         }
     },
     object : ManagerOrderTransition(OrderStatus.APPROVED, to = OrderStatus.PROCESSING) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(status = to))
         }
     },
@@ -98,24 +146,40 @@ private val transitions = listOf(
             return couriers.random()
         }
 
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             val courier = findCourier()
             return success(order.copy(status = to, courier = courier))
         }
 
     },
     object : ManagerOrderTransition(OrderStatus.APPROVED, OrderStatus.PROCESSING, to = OrderStatus.CANCELED) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(status = to, isActive = false))
         }
     },
     object : CourierOrderTransition(OrderStatus.READY, to = OrderStatus.SHIPPING) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             return success(order.copy(status = to))
         }
     },
     object : CourierOrderTransition(OrderStatus.SHIPPING, to = OrderStatus.CLOSED) {
-        override suspend fun apply(user: User, order: Order): MyResult<Order> {
+        override suspend fun apply(
+            user: User,
+            order: Order,
+            modification: OrderModification
+        ): MyResult<Order> {
             if (order.payment == null) return fail("No payment for order")
             return success(order.copy(status = to, isActive = false))
         }
@@ -125,75 +189,51 @@ private val transitions = listOf(
 
 object OrderLogic {
 
-    data class OrderClientWithPermission(val address: String?, val phone: String?)
-    data class OrderManagerWithPermission(val id: Int?, val login: String?, val restaurant: String?)
-    data class OrderOperatorWithPermission(val id: Int?, val login: String?, val number: Int?)
-    data class OrderCourierWithPermission(val id: Int?, val login: String?)
-    data class OrderPaymentWithPermission(val id: Int?, val type: String?, val amount: Int?, val transaction: String?)
-    data class OrderWithPermission(
-        val id: Int,
-        val status: String,
-        val cost: Int?,
-        val payment: OrderPaymentWithPermission?,
-        val client: OrderClientWithPermission?,
-        val operator: OrderOperatorWithPermission?,
-        val manager: OrderManagerWithPermission?,
-        val courier: OrderCourierWithPermission?
-    )
+    private fun sanitizeOrder(user: User, order: Order): OrderWithPermission {
+        val promo = order.promo?.infoOnlyPermission()
+        val payment = order.payment?.fullPermission()
 
-    private fun sanitizeOrder(user: User, order: Order) = when (user) {
-        is Client -> {
-            val client = OrderClientWithPermission(order.client.address, order.client.phone)
-            val operator = OrderOperatorWithPermission(null, null, order.operator?.number)
-            val manager = OrderManagerWithPermission(null, null, order.manager?.restaurant)
-            val payment = OrderPaymentWithPermission(
-                order.payment?.id,
-                order.payment?.type?.name,
-                order.payment?.amount,
-                order.payment?.cardTransaction
-            )
-            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, null)
-        }
-        is Manager -> {
-            val client = OrderClientWithPermission(order.client.address, order.client.phone)
-            val operator = OrderOperatorWithPermission(
-                order.operator?.id, order.operator?.login, order.operator?.number
-            )
-            val manager = OrderManagerWithPermission(order.manager?.id, order.manager?.login, order.manager?.restaurant)
-            val courier = OrderCourierWithPermission(order.courier?.id, order.courier?.login)
-            val payment = OrderPaymentWithPermission(
-                order.payment?.id,
-                order.payment?.type?.name,
-                order.payment?.amount,
-                order.payment?.cardTransaction
-            )
-            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, courier)
-        }
-        is Operator -> {
-            val client = OrderClientWithPermission(order.client.address, order.client.phone)
-            val operator = OrderOperatorWithPermission(
-                order.operator?.id, order.operator?.login, order.operator?.number
-            )
-            val manager = OrderManagerWithPermission(order.manager?.id, order.manager?.login, order.manager?.restaurant)
-            val payment = OrderPaymentWithPermission(
-                order.payment?.id,
-                order.payment?.type?.name,
-                order.payment?.amount,
-                order.payment?.cardTransaction
-            )
-            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, operator, manager, null)
-        }
-        is Courier -> {
-            val client = OrderClientWithPermission(order.client.address, order.client.phone)
-            val manager = OrderManagerWithPermission(order.manager?.id, order.manager?.login, order.manager?.restaurant)
-            val courier = OrderCourierWithPermission(order.courier?.id, order.courier?.login)
-            val payment = OrderPaymentWithPermission(
-                order.payment?.id,
-                order.payment?.type?.name,
-                order.payment?.amount,
-                order.payment?.cardTransaction
-            )
-            OrderWithPermission(order.id, order.status.name, order.cost, payment, client, null, manager, courier)
+        return when (user) {
+            is Client -> {
+                val client = order.client.infoOnlyPermission()
+                val operator = order.operator?.infoOnlyPermission()
+                val manager = order.manager?.infoOnlyPermission()
+                OrderWithPermission(
+                    order.id, order.status.name, order.cost,
+                    payment, promo, client, operator, manager,
+                    null
+                )
+            }
+            is Manager -> {
+                val client = order.client.fullPermission()
+                val operator = order.operator?.fullPermission()
+                val manager = order.manager?.fullPermission()
+                val courier = order.courier?.fullPermission()
+                OrderWithPermission(
+                    order.id, order.status.name, order.cost,
+                    payment, promo, client, operator,
+                    manager, courier
+                )
+            }
+            is Operator -> {
+                val client = order.client.infoOnlyPermission()
+                val operator = order.operator?.infoOnlyPermission()
+                val manager = order.manager?.fullPermission()
+                OrderWithPermission(
+                    order.id, order.status.name, order.cost,
+                    payment, promo, client, operator, manager,
+                    null
+                )
+            }
+            is Courier -> {
+                val client = order.client.infoOnlyPermission()
+                val manager = order.manager?.fullPermission()
+                val courier = order.courier?.fullPermission()
+                OrderWithPermission(
+                    order.id, order.status.name, order.cost,
+                    payment, promo, client, null, manager, courier
+                )
+            }
         }
     }
 
@@ -214,7 +254,7 @@ object OrderLogic {
         }?.let { sanitizeOrder(user, it) }
     }
 
-    suspend fun create(user: User, pizza: List<Int>): MyResult<OrderWithPermission?> {
+    suspend fun create(user: User, pizza: List<Int>): MyResult<OrderWithPermission> {
         if (user !is Client) return MyResult.Error("Only client can create orders")
         if (pizza.isEmpty()) return MyResult.Error("Order pizza is empty")
         val dbPizza = Pizza.modelManager.list(pizza)
@@ -226,21 +266,26 @@ object OrderLogic {
             pizzaCost,
             false,
             user,
-            null, null, null, null,
+            null, null, null, null, null,
             DateTime.now(), DateTime.now()
         )
         val createdOrder = Order.modelManager.create(order)
         Order.modelManager.addPizzaToOrder(createdOrder, pizza)
-        val result = get(user, createdOrder.id)
+        val result = get(user, createdOrder.id) ?: return MyResult.Error("Not found")
         return MyResult.Success(result)
     }
 
 
-    suspend fun change(user: User, orderId: Int, status: OrderStatus): MyResult<OrderWithPermission?> {
+    suspend fun change(
+        user: User,
+        orderId: Int,
+        modification: OrderModification
+    ): MyResult<OrderWithPermission> {
         val order = Order.modelManager.get(orderId) ?: return MyResult.Error("No such order")
         val transition =
-            transitions.find { it.match(user, order, status) } ?: return MyResult.Error("Transition is not possible")
-        val changed = transition.apply(user, order)
+            transitions.find { it.match(user, order, modification) }
+                ?: return MyResult.Error("Transition is not possible")
+        val changed = transition.apply(user, order, modification)
         val result = when (changed) {
             is MyResult.Error -> return MyResult.Error(changed.message)
             is MyResult.Success -> changed.data

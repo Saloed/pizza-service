@@ -16,6 +16,10 @@ import {
     Button,
     SimpleShowLayout,
     TextField,
+    TextInput,
+    NumberInput,
+    SimpleForm,
+    required,
     BooleanField,
     NumberField,
     FunctionField,
@@ -23,6 +27,7 @@ import {
     ReferenceManyField,
     SingleFieldList,
     ChipField,
+    Create,
     CREATE, UPDATE
 } from 'react-admin';
 
@@ -182,6 +187,39 @@ const PizzaShow = (props) => (
     </Show>
 );
 
+
+export const ManagerCreate = (props) => (
+    <Create {...props}>
+        <SimpleForm>
+            <TextInput source="username" validate={required()}/>
+            <TextInput source="password"  type={"password"} validate={required()}/>
+            <TextInput source="restaurant" validate={required()}/>
+        </SimpleForm>
+    </Create>
+);
+
+
+export const CourierCreate = (props) => (
+    <Create {...props}>
+        <SimpleForm>
+            <TextInput source="username" validate={required()}/>
+            <TextInput source="password"  type={"password"} validate={required()}/>
+        </SimpleForm>
+    </Create>
+);
+
+
+export const OperatorCreate = (props) => (
+    <Create {...props}>
+        <SimpleForm>
+            <TextInput source="username" validate={required()}/>
+            <TextInput source="password"  type={"password"} validate={required()}/>
+            <NumberInput source="number" validate={required()}/>
+        </SimpleForm>
+    </Create>
+);
+
+
 export const ManagerAdmin = () => {
     return (
         <Provider
@@ -197,10 +235,13 @@ export const ManagerAdmin = () => {
                 dataProvider={dataProvider}
                 authProvider={authProvider}
                 history={history}
-                title="Client"
+                title="Manager"
             >
                 <Resource name={'order'} list={ManagerOrderList} show={ManagerOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
+                <Resource name={'manager'} create={ManagerCreate}  list={ManagerCreate}/>
+                <Resource name={'operator'} create={OperatorCreate} list={OperatorCreate}/>
+                <Resource name={'courier'} create={CourierCreate} list={CourierCreate}/>
             </Admin>
         </Provider>
     );

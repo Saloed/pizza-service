@@ -94,9 +94,12 @@ fun Application.module() {
         createClient()
         authenticate {
             createUser()
+            listClients()
             order()
             pizza()
             payment()
+            promo()
+            promoClient()
             webSocket("/notifications") {
                 val user = call.userOrNull ?: return@webSocket
                 log.info("User ${user.login} subscribed for notifications")

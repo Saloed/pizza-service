@@ -1,9 +1,11 @@
 package ru.spbstu.architectures.pizzaService.logic
 
+import org.jetbrains.exposed.sql.Op
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.models.*
+import ru.spbstu.architectures.pizzaService.utils.MyResult
 
-object UserCreator {
+object UserLogic {
     suspend fun createClient(login: String, password: String): User? {
         val client = Client(0, login, password, "", "")
         return Client.modelManager.create(client)
@@ -28,4 +30,11 @@ object UserCreator {
             }
         }
     }
+
+    suspend fun listClients(user: User): MyResult<List<ClientWithPermission>> {
+        if (user !is Manager) return MyResult.Error("No access")
+        val result = Client.modelManager.list { Op.TRUE }.map { it.fullPermission() }
+        return MyResult.Success(result)
+    }
+
 }

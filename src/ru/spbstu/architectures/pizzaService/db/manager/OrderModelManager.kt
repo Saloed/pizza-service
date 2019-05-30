@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import ru.spbstu.architectures.pizzaService.db.Db
-import ru.spbstu.architectures.pizzaService.models.ModelManager
 import ru.spbstu.architectures.pizzaService.db.table.OrderPizzaTable
 import ru.spbstu.architectures.pizzaService.db.table.OrderStatusTable
 import ru.spbstu.architectures.pizzaService.db.table.OrderTable
@@ -54,10 +53,12 @@ object OrderModelManager : ModelManager<Order> {
         )
     }
 
-    private fun ResultSet.buildOrder(): Order {
+    private suspend fun ResultSet.buildOrder(): Order {
         val status = OrderStatus.valueOf(getString("order_status").toUpperCase())
+        val orderId = getInt("order_id")
+        val promo = Promo.modelManager.getForOrder(orderId)
         return Order(
-            getInt("order_id"),
+            orderId,
             status,
             getInt("order_cost"),
             getBoolean("order_is_active"),
@@ -66,6 +67,7 @@ object OrderModelManager : ModelManager<Order> {
             buildUser("operator") as? Operator,
             buildUser("courier") as? Courier,
             buildPayment(),
+            promo,
             getTimestamp("order_created_at").toDateTime(),
             getTimestamp("order_updated_at").toDateTime()
         )
@@ -73,8 +75,7 @@ object OrderModelManager : ModelManager<Order> {
 
     override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) =
         Db.transaction {
-            @Language("PostgreSQL") val query = """select
-       "order".id             order_id,
+            @Language("PostgreSQL") val query = """select "order".id             order_id,
        is_active              order_is_active,
        "order".created_at     order_created_at,
        "order".updated_at     order_updated_at,
@@ -82,7 +83,7 @@ object OrderModelManager : ModelManager<Order> {
        "order".cost           order_cost,
 
        payment.id             payment_id,
-       order_id               payment_order_id,
+       payment.order_id       payment_order_id,
        amount                 payment_amount,
        transaction            payment_transaction,
        payment.created_at     payment_created_at,
@@ -122,13 +123,13 @@ from "order"
          left join operator on "order".operator_id = operator.id
          left join manager on "order".manager_id = manager.id
          left join "user" client_user on client_id = client_user.id
-         left join "user" manager_user on manager_id = manager_user.id
+         left join "user" manager_user on "order".manager_id = manager_user.id
          left join "user" operator_user on operator_id = operator_user.id
          left join "user" courier_user on courier_id = courier_user.id
 where ${where.toSQL()}
 """.trimIndent()
-            query.execAndMap { it.buildOrder() }
-        }
+            query.execAndMap { it }
+        }.map { it.buildOrder() }
 
     override suspend fun update(model: Order): Order {
         Db.transaction {
@@ -196,3 +197,5 @@ suspend fun ModelManager<Order>.addPizzaToOrder(order: Order, pizza: List<Int>) 
         }
     }
 }
+
+

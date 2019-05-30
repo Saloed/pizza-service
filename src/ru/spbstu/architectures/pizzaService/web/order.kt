@@ -5,20 +5,16 @@ import io.ktor.application.log
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Location
 import io.ktor.locations.get
-import io.ktor.locations.post
 import io.ktor.locations.put
 import io.ktor.request.receive
-import io.ktor.request.receiveText
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import io.ktor.routing.post
 import ru.spbstu.architectures.pizzaService.logic.OrderLogic
+import ru.spbstu.architectures.pizzaService.logic.OrderModification
 import ru.spbstu.architectures.pizzaService.models.OrderStatus
-import ru.spbstu.architectures.pizzaService.utils.MyResult
-import ru.spbstu.architectures.pizzaService.utils.getListQueryParams
-import ru.spbstu.architectures.pizzaService.utils.responseListRange
-import ru.spbstu.architectures.pizzaService.utils.userOrNull
+import ru.spbstu.architectures.pizzaService.utils.*
 
 data class OrderListFilter(val id: Int?)
 
@@ -27,7 +23,7 @@ data class SingleOrderRequest(val id: Int)
 
 data class OrderCreateForm(val pizza: List<Int>)
 
-data class OrderModificationForm(val status: String)
+data class OrderModificationForm(val status: String, val promoId: Int?)
 
 fun Route.order() {
     get("/order") {
@@ -44,28 +40,16 @@ fun Route.order() {
     }
     post("/order") {
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Forbidden, "")
-        call.application.log.warn("client: $user")
         val form = call.receive<OrderCreateForm>()
-        val res = when (val result = OrderLogic.create(user, form.pizza)) {
-            is MyResult.Error -> return@post call.respond(HttpStatusCode.BadRequest, result.message)
-            is MyResult.Success -> result.data
-        } ?: let {
-            call.application.log.error("Order not found after create")
-            return@post call.respond(HttpStatusCode.NotFound, "")
-        }
-        call.respond(res)
+        val result = OrderLogic.create(user, form.pizza)
+        call.respondMyResult(result)
     }
     put<SingleOrderRequest> {
         val user = call.userOrNull ?: return@put call.respond(HttpStatusCode.Forbidden, "")
         val form = call.receive<OrderModificationForm>()
         val status = OrderStatus.valueOf(form.status.toUpperCase())
-        val res = when (val result = OrderLogic.change(user, it.id, status)) {
-            is MyResult.Error -> return@put call.respond(HttpStatusCode.BadRequest, result.message)
-            is MyResult.Success -> result.data
-        } ?: let {
-            call.application.log.error("Order not found after update")
-            return@put call.respond(HttpStatusCode.NotFound, "")
-        }
-        call.respond(res)
+        val orderModification = OrderModification(status, form.promoId)
+        val result = OrderLogic.change(user, it.id, orderModification)
+        call.respondMyResult(result)
     }
 }

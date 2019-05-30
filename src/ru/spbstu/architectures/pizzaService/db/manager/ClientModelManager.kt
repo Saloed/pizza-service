@@ -1,7 +1,7 @@
 package ru.spbstu.architectures.pizzaService.db.manager
 
 import org.jetbrains.exposed.sql.*
-import ru.spbstu.architectures.pizzaService.db.*
+import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.db.table.ClientTable
 import ru.spbstu.architectures.pizzaService.db.table.UserTable
 import ru.spbstu.architectures.pizzaService.models.Client
@@ -53,3 +53,7 @@ suspend fun ModelManager<Client>.orders(client: Client) =
     OrderModelManager.list {
         intColumn("order", "client_id").eq(client.id)
     }
+
+suspend fun ModelManager<Client>.getForIds(ids: List<Int>) = list {
+    ClientTable.id inList ids
+}

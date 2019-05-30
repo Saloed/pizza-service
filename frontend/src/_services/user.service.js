@@ -2,8 +2,7 @@ import config from 'config';
 import decodeJwt from 'jwt-decode';
 import {authHeader} from '../_helpers';
 import restProvider from 'ra-data-simple-rest';
-import {AUTH_LOGIN, AUTH_LOGOUT, AUTH_ERROR, AUTH_GET_PERMISSIONS, AUTH_CHECK, HttpError} from 'react-admin'
-import {userActions} from "../_actions";
+import {AUTH_CHECK, AUTH_ERROR, AUTH_GET_PERMISSIONS, AUTH_LOGIN, AUTH_LOGOUT, HttpError} from 'react-admin'
 import axios from 'axios'
 
 export const userService = {
@@ -118,14 +117,13 @@ function handleResponse(response) {
 const fetchJson = (url, options) => {
     return axios(url, {...options, data: options.body})
         .then((response) => {
+            console.log(response)
             if (response.status < 200 || response.status >= 300) {
-                return Promise.reject(
-                    new HttpError(
-                        (response.data && response.data.message) || response.statusText,
-                        response.status,
-                        response.data
-                    )
-                );
+                return Promise.reject(new HttpError(
+                    (response.data && response.data.message) || response.statusText,
+                    response.status,
+                    response.data
+                ));
             }
             const headers = new Headers({...response.headers})
             return Promise.resolve({
@@ -134,6 +132,14 @@ const fetchJson = (url, options) => {
                 status: response.status,
                 statusText: response.statusText
             });
+        })
+        .catch(error => {
+            const response = error.response
+            return Promise.reject(new HttpError(
+                (response.data && response.data.message) || response.statusText,
+                response.status,
+                response.data
+            ));
         });
 };
 

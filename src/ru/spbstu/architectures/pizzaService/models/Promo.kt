@@ -4,18 +4,24 @@ import org.joda.time.DateTime
 import ru.spbstu.architectures.pizzaService.db.manager.listPromo
 
 enum class PromoStatus {
-    NEW, ACTIVE, CLOSED
+    NEW, ACTIVE, FINISHED, CLOSED
+}
+
+
+enum class PromoEffect {
+    DISCOUNT_5, DISCOUNT_10, DISCOUNT_15
 }
 
 data class Promo(
     val id: Int,
+    val manager: Manager,
     val status: PromoStatus,
     val result: String?,
+    val description: String,
+    val effect: PromoEffect,
     val createdAt: DateTime,
     val updatedAt: DateTime
 ) : Model<Promo> {
-    suspend fun getClients() = PromoClient.modelManager.listPromo(this)
-
     companion object : ModelManagerFactory<Promo>(Promo::class.java)
 }
 
@@ -26,8 +32,10 @@ enum class PromoClientStatus {
 }
 
 data class PromoClient(
-    val clientId: Int,
-    val promoId: Int,
+    val id: Int,
+    val client: Client,
+    val operator: Operator?,
+    val promo: Promo,
     val status: PromoClientStatus,
     val createdAt: DateTime,
     val updatedAt: DateTime
