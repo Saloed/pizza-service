@@ -72,5 +72,7 @@ dependencies {
         exclude(module: 'kotlin-stdlib')
     }
     runtimeClasspath 'org.postgresql:postgresql:42.2.5'
+    testRuntimeClasspath 'org.postgresql:postgresql:42.2.5'
     testCompile "io.ktor:ktor-server-tests:$ktor_version"
+    testCompile "io.mockk:mockk:1.9.3"
 }
