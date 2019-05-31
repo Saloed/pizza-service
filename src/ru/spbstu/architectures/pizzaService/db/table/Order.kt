@@ -7,7 +7,7 @@ object OrderStatusTable : Table("order_status") {
     val name = varchar("name", 100)
 }
 
-object OrderTable : Table() {
+object OrderTable : Table("client_order") {
     val id = integer("id").primaryKey().autoIncrement()
     val statusId = reference("status_id", OrderStatusTable.id)
     val isActive = bool("is_active")

@@ -53,10 +53,9 @@ object OrderModelManager : ModelManager<Order> {
         )
     }
 
-    private suspend fun ResultSet.buildOrder(): Order {
+    private fun ResultSet.buildOrder(): Order {
         val status = OrderStatus.valueOf(getString("order_status").toUpperCase())
         val orderId = getInt("order_id")
-        val promo = Promo.modelManager.getForOrder(orderId)
         return Order(
             orderId,
             status,
@@ -67,7 +66,7 @@ object OrderModelManager : ModelManager<Order> {
             buildUser("operator") as? Operator,
             buildUser("courier") as? Courier,
             buildPayment(),
-            promo,
+            null,
             getTimestamp("order_created_at").toDateTime(),
             getTimestamp("order_updated_at").toDateTime()
         )
@@ -75,66 +74,70 @@ object OrderModelManager : ModelManager<Order> {
 
     override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) =
         Db.transaction {
-            @Language("PostgreSQL") val query = """select "order".id             order_id,
-       is_active              order_is_active,
-       "order".created_at     order_created_at,
-       "order".updated_at     order_updated_at,
-       order_status.name      order_status,
-       "order".cost           order_cost,
+            @Language("PostgreSQL") val query = """
+select client_order.id         order_id,
+       is_active               order_is_active,
+       client_order.created_at order_created_at,
+       client_order.updated_at order_updated_at,
+       order_status.name       order_status,
+       client_order.cost       order_cost,
 
-       payment.id             payment_id,
-       payment.order_id       payment_order_id,
-       amount                 payment_amount,
-       transaction            payment_transaction,
-       payment.created_at     payment_created_at,
-       payment.updated_at     payment_updated_at,
-       payment_type.name      payment_type,
+       payment.id              payment_id,
+       payment.order_id        payment_order_id,
+       amount                  payment_amount,
+       transaction             payment_transaction,
+       payment.created_at      payment_created_at,
+       payment.updated_at      payment_updated_at,
+       payment_type.name       payment_type,
 
-       client.id              client_id,
-       address                client_address,
-       phone                  client_phone,
-       client_user.login      client_login,
-       client_user.password   client_password,
-       client_user.role       client_role,
+       client.id               client_id,
+       address                 client_address,
+       phone                   client_phone,
+       client_user.login       client_login,
+       client_user.password    client_password,
+       client_user.role        client_role,
 
-       courier.id             courier_id,
-       courier_user.login     courier_login,
-       courier_user.password  courier_password,
-       courier_user.role      courier_role,
+       courier.id              courier_id,
+       courier_user.login      courier_login,
+       courier_user.password   courier_password,
+       courier_user.role       courier_role,
 
-       operator.id            operator_id,
-       number                 operator_number,
-       operator_user.login    operator_login,
-       operator_user.password operator_password,
-       operator_user.role     operator_role,
+       operator.id             operator_id,
+       number                  operator_number,
+       operator_user.login     operator_login,
+       operator_user.password  operator_password,
+       operator_user.role      operator_role,
 
-       manager.id             manager_id,
-       restaurant             manager_restaurant,
-       manager_user.login     manager_login,
-       manager_user.password  manager_password,
-       manager_user.role      manager_role
+       manager.id              manager_id,
+       restaurant              manager_restaurant,
+       manager_user.login      manager_login,
+       manager_user.password   manager_password,
+       manager_user.role       manager_role
 
-from "order"
-         join order_status on "order".status_id = order_status.id
-         left join payment on "order".id = payment.order_id
+from client_order
+         join order_status on client_order.status_id = order_status.id
+         left join payment on client_order.id = payment.order_id
          left join payment_type on payment.type_id = payment_type.id
-         left join client on "order".client_id = client.id
-         left join courier on "order".courier_id = courier.id
-         left join operator on "order".operator_id = operator.id
-         left join manager on "order".manager_id = manager.id
+         left join client on client_order.client_id = client.id
+         left join courier on client_order.courier_id = courier.id
+         left join operator on client_order.operator_id = operator.id
+         left join manager on client_order.manager_id = manager.id
          left join "user" client_user on client_id = client_user.id
-         left join "user" manager_user on "order".manager_id = manager_user.id
+         left join "user" manager_user on client_order.manager_id = manager_user.id
          left join "user" operator_user on operator_id = operator_user.id
          left join "user" courier_user on courier_id = courier_user.id
 where ${where.toSQL()}
 """.trimIndent()
-            query.execAndMap { it }
-        }.map { it.buildOrder() }
+            query.execAndMap { buildOrder() }
+        }.map {
+            val promo = Promo.modelManager.getForOrder(it.id)
+            it.copy(promo = promo)
+        }
 
     override suspend fun update(model: Order): Order {
         Db.transaction {
             @Language("PostgreSQL") val query = """
-                update "order"
+                update client_order
                 set status_id = (select id from order_status where name = '${model.status.name.toLowerCase()}'),
                 is_active = ${model.isActive},
                 cost = ${model.cost},
@@ -145,7 +148,7 @@ where ${where.toSQL()}
                 updated_at =  ${model.updatedAt.toDb()}
                 where id = ${model.id}
 """.trimIndent()
-            query.execAndMap { }
+            query.exec()
         }
 
         return model
@@ -171,20 +174,19 @@ where ${where.toSQL()}
         }
 
     override suspend fun get(id: Int): Order? = list {
-        intColumn("order", "id").eq(id)
+        intColumn("client_order", "id").eq(id)
     }.firstOrNull()
 
 }
 
 suspend fun ModelManager<Order>.pizza(orderId: Int): List<Pizza> {
-    @Language("PostgreSQL") val query = """select pizza_id id
+    @Language("PostgreSQL") val query = """
+select pizza_id id
 from order_pizza
 where order_pizza.order_id = ${orderId}
     """.trimIndent()
     val pizzaIds = Db.transaction {
-        query.execAndMap {
-            it.run { getInt("id") }
-        }
+        query.execAndMap { getInt("id") }
     }
     return Pizza.modelManager.list(pizzaIds)
 }

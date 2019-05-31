@@ -49,7 +49,7 @@ object CourierModelManager : ModelManager<Courier> {
 
 suspend fun ModelManager<Courier>.activeOrders(courier: Courier) =
     OrderModelManager.list {
-        intColumn("order", "courier_id").eq(courier.id)
-            .and(boolColumn("order", "is_active"))
+        intColumn("client_order", "courier_id").eq(courier.id)
+            .and(boolColumn("client_order", "is_active"))
             .and(stringColumn("order_status", "name").inList(OrderStatus.forCourier.map { it.name.toLowerCase() }))
     }

@@ -20,8 +20,6 @@ object Db {
         if (initialized) return
         val hikariConfig = configHikariPool(dbConfig)
         myDatabase = Database.connect(hikariConfig)
-//        val url = "jdbc:postgresql://${dbConfig.host}:5432/${dbConfig.name}"
-//        myDatabase = Database.connect(url, "org.postgresql.Driver", dbConfig.user, dbConfig.password)
         initialized = true
     }
 

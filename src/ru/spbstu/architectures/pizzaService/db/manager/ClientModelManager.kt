@@ -51,7 +51,7 @@ object ClientModelManager : ModelManager<Client> {
 
 suspend fun ModelManager<Client>.orders(client: Client) =
     OrderModelManager.list {
-        intColumn("order", "client_id").eq(client.id)
+        intColumn("client_order", "client_id").eq(client.id)
     }
 
 suspend fun ModelManager<Client>.getForIds(ids: List<Int>) = list {

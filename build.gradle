@@ -75,4 +75,6 @@ dependencies {
     testRuntimeClasspath 'org.postgresql:postgresql:42.2.5'
     testCompile "io.ktor:ktor-server-tests:$ktor_version"
     testCompile "io.mockk:mockk:1.9.3"
+    testCompile "com.h2database:h2:1.4.199"
+    testCompile 'io.rest-assured:rest-assured:4.0.0'
 }

@@ -24,7 +24,7 @@ insert into payment_type (id, name)
 values (0, 'cash'),
        (1, 'card');
 
-create table if not exists public.order
+create table if not exists client_order
 (
     id          serial  not null primary key,
     status_id   int     not null references order_status,
@@ -40,7 +40,7 @@ create table if not exists public.order
 
 create table if not exists order_pizza
 (
-    order_id int not null references public.order,
+    order_id int not null references client_order,
     pizza_id int not null
 );
 
@@ -50,7 +50,7 @@ create table if not exists payment
 (
     id          serial not null primary key,
     type_id     int    not null references payment_type,
-    order_id    int    not null references public.order,
+    order_id    int    not null references client_order,
     amount      int,
     transaction varchar(255),
     created_at  timestamp,

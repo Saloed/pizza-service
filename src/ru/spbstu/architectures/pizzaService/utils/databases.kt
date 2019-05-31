@@ -6,12 +6,18 @@ import org.joda.time.DateTime
 import java.sql.ResultSet
 import java.sql.Timestamp
 
-fun <T : Any> String.execAndMap(transform: (ResultSet) -> T): List<T> {
+fun String.exec(): List<ResultSet> {
+    val result = arrayListOf<ResultSet>()
+    TransactionManager.current().exec(this) { rs ->
+        while (rs.next()) result += rs
+    }
+    return result
+}
+
+fun <T : Any> String.execAndMap(transform: ResultSet.() -> T): List<T> {
     val result = arrayListOf<T>()
     TransactionManager.current().exec(this) { rs ->
-        while (rs.next()) {
-            result += transform(rs)
-        }
+        while (rs.next()) result += rs.transform()
     }
     return result
 }

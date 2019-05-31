@@ -22,6 +22,6 @@ create table if not exists promo_client
 
 create table if not exists order_promo
 (
-    order_id int not null primary key references public.order,
+    order_id int not null primary key references client_order,
     promo_id int not null references promo
 )

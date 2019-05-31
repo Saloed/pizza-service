@@ -58,13 +58,13 @@ object ManagerModelManager : ModelManager<Manager> {
 
 suspend fun ModelManager<Manager>.orders(manager: Manager) =
     OrderModelManager.list {
-        intColumn("order", "manager_id").eq(manager.id)
+        intColumn("client_order", "manager_id").eq(manager.id)
     }
 
 suspend fun ModelManager<Manager>.activeOrders(manager: Manager) =
     OrderModelManager.list {
-        intColumn("order", "manager_id").eq(manager.id)
-            .and(boolColumn("order", "is_active"))
+        intColumn("client_order", "manager_id").eq(manager.id)
+            .and(boolColumn("client_order", "is_active"))
             .and(stringColumn("order_status", "name").inList(OrderStatus.forManager.map { it.name.toLowerCase() }))
     }
 

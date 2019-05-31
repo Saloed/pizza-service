@@ -51,8 +51,8 @@ object OperatorModelManager : ModelManager<Operator> {
 
 suspend fun ModelManager<Operator>.activeOrders(operator: Operator) =
     OrderModelManager.list {
-        intColumn("order", "operator_id").eq(operator.id)
-            .and(boolColumn("order", "is_active"))
+        intColumn("client_order", "operator_id").eq(operator.id)
+            .and(boolColumn("client_order", "is_active"))
             .and(stringColumn("order_status", "name").inList(OrderStatus.forOperator.map { it.name.toLowerCase() }))
     }
 

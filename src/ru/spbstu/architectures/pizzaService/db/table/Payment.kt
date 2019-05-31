@@ -7,7 +7,7 @@ object PaymentTypeTable : Table("payment_type") {
     val name = varchar("name", 100)
 }
 
-object PaymentTable : Table() {
+object PaymentTable : Table("payment") {
     val id = integer("id").autoIncrement().primaryKey()
     val typeId = reference("type_id", PaymentTypeTable.id)
     val orderId = integer("order_id")

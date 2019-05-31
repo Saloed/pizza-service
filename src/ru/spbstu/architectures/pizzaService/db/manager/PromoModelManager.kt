@@ -75,8 +75,8 @@ suspend fun ModelManager<Promo>.listForClient(client: Client) = Db.transaction {
 }.toList().processPromoResults()
 
 suspend fun ModelManager<Promo>.getForOrder(orderId: Int) = Db.transaction {
-    OrderPromoTable.select { OrderPromoTable.orderId eq orderId }
-}.singleOrNull()?.let { it[OrderPromoTable.promoId] }?.let { Promo.modelManager.get(it) }
+    OrderPromoTable.select { OrderPromoTable.orderId eq orderId }.singleOrNull()
+}?.let { it[OrderPromoTable.promoId] }?.let { Promo.modelManager.get(it) }
 
 suspend fun ModelManager<Promo>.setForOrder(promoOrderId: Int, promo: Promo): Promo? {
     val current = Db.transaction {
