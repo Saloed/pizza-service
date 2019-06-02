@@ -10,7 +10,7 @@ sealed class User(val id: Int, val login: String, val password: String) {
     abstract val role: UserRoleType
 
     companion object {
-        val manager = UserModelManager
+        val modelManager = UserModelManager
     }
 }
 

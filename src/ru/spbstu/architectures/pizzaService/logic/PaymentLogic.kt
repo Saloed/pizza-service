@@ -6,7 +6,7 @@ import ru.spbstu.architectures.pizzaService.utils.MyResult
 import ru.spbstu.architectures.pizzaService.web.PaymentCreateForm
 
 object PaymentLogic {
-    suspend fun create(user: User, payment: PaymentCreateForm): MyResult<Payment> {
+    suspend fun create(user: User, payment: PaymentCreateForm): MyResult<PaymentWithPermission> {
         if (user !is Courier) return MyResult.Error("Only courier can create payments")
         val order = Order.modelManager.get(payment.orderId)
         if (order == null || order.courier?.id != user.id) return MyResult.Error("Order not found")
@@ -19,6 +19,6 @@ object PaymentLogic {
             DateTime.now(), DateTime.now()
         )
         val result = Payment.modelManager.create(paymentRecord)
-        return MyResult.Success(result)
+        return MyResult.Success(result.fullPermission())
     }
 }

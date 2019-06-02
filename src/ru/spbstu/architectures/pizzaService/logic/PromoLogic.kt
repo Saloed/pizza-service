@@ -18,9 +18,9 @@ object PromoLogic {
         if (!clients.map { it.id }.containsAll(parameters.clientIds)) return MyResult.Error("All users must be a clients")
         val promoRecord = Promo(
             0,
-            user,
             PromoStatus.NEW,
             null,
+            user.id,
             parameters.description,
             parameters.effect,
             DateTime.now(),
@@ -28,7 +28,7 @@ object PromoLogic {
         )
         val promo = Promo.modelManager.create(promoRecord)
         val promoClients = clients.map {
-            PromoClient(0, it, null, promo, PromoClientStatus.NOTINFORMED, DateTime.now(), DateTime.now())
+            PromoClient(0, null, promo.id, it.id, PromoClientStatus.NOTINFORMED, DateTime.now(), DateTime.now())
         }
         PromoClient.modelManager.bulkCreate(promoClients)
         return MyResult.Success(promo.fullPermission())
@@ -56,7 +56,7 @@ object PromoLogic {
 
     suspend fun get(user: User, promoId: Int): MyResult<PromoWithPermission> {
         val promo = Promo.modelManager.get(promoId) ?: return MyResult.Error("Not found")
-        if (user is Manager && user.id == promo.manager.id) return MyResult.Success(promo.fullPermission())
+        if (user is Manager && user.id == promo.managerId) return MyResult.Success(promo.fullPermission())
         if (user is Client) {
             val clientPromoIds = Promo.modelManager.listForClient(user).map { it.id }
             if (promo.id !in clientPromoIds) return MyResult.Error("No access")
@@ -70,7 +70,7 @@ object PromoLogic {
         val clientsWithOperator = clients.map {
             it.copy(
                 status = PromoClientStatus.NOTINFORMED,
-                operator = operators.random(),
+                operatorId = operators.random().id,
                 updatedAt = DateTime.now()
             )
         }
@@ -90,7 +90,7 @@ object PromoLogic {
     suspend fun update(user: User, promoId: Int, params: PromoModificationParams): MyResult<PromoWithPermission> {
         if (user !is Manager) return MyResult.Error("Only manager can modify promos")
         val promo = Promo.modelManager.get(promoId) ?: return MyResult.Error("Not found")
-        if (promo.manager.id != user.id) return MyResult.Error("No access")
+        if (promo.managerId != user.id) return MyResult.Error("No access")
 
         val updatedPromo = when (promo.status to params.status) {
             (PromoStatus.NEW to PromoStatus.ACTIVE) -> startPromo(user, promo)

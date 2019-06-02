@@ -12,16 +12,18 @@ object PromoClientModelManager : ModelManager<PromoClient> {
 
     fun insertPromoClient(model: PromoClient) =
         PromoClientTable.insert {
-            it[clientId] = model.client.id
-            it[promoId] = model.promo.id
+            it[clientId] = model.clientId
+            it[promoId] = model.promoId
+            it[operatorId] = model.operatorId
             it[status] = model.status
             it[created] = model.createdAt
             it[updated] = model.updatedAt
         }.let { model.copy(id = it[PromoClientTable.id]) }
 
     fun updatePromoClient(model: PromoClient) = PromoClientTable.update({ PromoClientTable.id eq model.id }) {
-        it[clientId] = model.client.id
-        it[promoId] = model.promo.id
+        it[clientId] = model.clientId
+        it[promoId] = model.promoId
+        it[operatorId] = model.operatorId
         it[status] = model.status
         it[created] = model.createdAt
         it[updated] = model.updatedAt
@@ -39,25 +41,13 @@ object PromoClientModelManager : ModelManager<PromoClient> {
         PromoTable.id inList ids.toSet()
     }.map { it.id to it }.toMap()
 
-    override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>): List<PromoClient> {
-        val dbData = Db.transaction {
-            PromoClientTable.select(where).toList()
-        }
-        val promoIds = dbData.map { it[PromoClientTable.promoId] }
-        val clientIds = dbData.map { it[PromoClientTable.clientId] }
-        val operatorIds = dbData.mapNotNull { it[PromoClientTable.operatorId] }
-        val promos = promoByIds(promoIds)
-        val clients = Client.modelManager.getForIds(clientIds).map { it.id to it }.toMap()
-        val operators = Operator.modelManager.getForIds(operatorIds).map { it.id to it }.toMap()
-        return dbData.map {
-            val promo = promos[it[PromoClientTable.promoId]]!!
-            val client = clients[it[PromoClientTable.clientId]]!!
-            val operator = operators[it[PromoClientTable.operatorId]]
+    override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) = Db.transaction {
+        PromoClientTable.select(where).map {
             PromoClient(
                 it[PromoClientTable.id],
-                client,
-                operator,
-                promo,
+                it[PromoClientTable.operatorId],
+                it[PromoClientTable.promoId],
+                it[PromoClientTable.clientId],
                 it[PromoClientTable.status],
                 it[PromoClientTable.created],
                 it[PromoClientTable.updated]

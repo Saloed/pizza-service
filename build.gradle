@@ -50,6 +50,10 @@ repositories {
     maven { url "https://dl.bintray.com/kotlin/exposed" }
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "io.ktor:ktor-server-netty:$ktor_version"
@@ -72,9 +76,11 @@ dependencies {
         exclude(module: 'kotlin-stdlib')
     }
     runtimeClasspath 'org.postgresql:postgresql:42.2.5'
-    testRuntimeClasspath 'org.postgresql:postgresql:42.2.5'
     testCompile "io.ktor:ktor-server-tests:$ktor_version"
+    testCompile "io.ktor:ktor-jackson:$ktor_version"
     testCompile "io.mockk:mockk:1.9.3"
     testCompile "com.h2database:h2:1.4.199"
     testCompile 'io.rest-assured:rest-assured:4.0.0'
+    testCompile "org.junit.jupiter:junit-jupiter:5.4.2"
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 }

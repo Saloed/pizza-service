@@ -53,7 +53,7 @@ suspend fun createGenericUser(
     val error = when {
         !UserValidator.passwordValid(form.password) -> "Password should be at least 6 characters long"
         !UserValidator.loginValid(form.username) -> "Login should be at least 4 characters long and consists of digits, letters, dots or underscores"
-        User.manager.get(form.username) != null -> "User with the following login is already registered"
+        User.modelManager.get(form.username) != null -> "User with the following login is already registered"
         else -> null
     }
     if (error != null) {

@@ -1,5 +1,6 @@
 package ru.spbstu.architectures.pizzaService.db.table
 
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
 
@@ -11,21 +12,21 @@ object UserTable : Table("user") {
 }
 
 object ClientTable : Table("client") {
-    val id = reference("id", UserTable.id).primaryKey()
+    val id = reference("id", UserTable.id, ReferenceOption.CASCADE).primaryKey()
     val address = text("address")
     val phone = varchar("phone", 100)
 }
 
 object ManagerTable : Table("manager") {
-    val id = reference("id", UserTable.id).primaryKey()
+    val id = reference("id", UserTable.id, ReferenceOption.CASCADE).primaryKey()
     val restaurant = text("restaurant")
 }
 
 object OperatorTable : Table("operator") {
-    val id = reference("id", UserTable.id).primaryKey()
+    val id = reference("id", UserTable.id, ReferenceOption.CASCADE).primaryKey()
     val number = integer("number")
 }
 
 object CourierTable : Table("courier") {
-    val id = reference("id", UserTable.id).primaryKey()
+    val id = reference("id", UserTable.id, ReferenceOption.CASCADE).primaryKey()
 }
