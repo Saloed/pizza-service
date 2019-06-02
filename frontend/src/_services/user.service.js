@@ -134,6 +134,7 @@ const fetchJson = (url, options) => {
             });
         })
         .catch(error => {
+            console.log(error)
             const response = error.response
             return Promise.reject(new HttpError(
                 (response.data && response.data.message) || response.statusText,

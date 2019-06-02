@@ -16,6 +16,8 @@ import {
     Button,
     SimpleShowLayout,
     TextField,
+    SelectField,
+    Labeled,
     TextInput,
     NumberInput,
     SimpleForm,
@@ -30,6 +32,8 @@ import {
     Create,
     CREATE, UPDATE
 } from 'react-admin';
+import PromoCreateButton from "./PromoCreateButton";
+import PromoFinishButton from "./PromoFinishButton";
 
 // side effects
 const authProvider = userService.restApiAuthProvider;
@@ -118,8 +122,22 @@ const ManagerOrderShowActions = ({basePath, data, resource}) => {
     );
 };
 
+
+const ConditionalPromoField = ({record, ...rest}) => {
+    console.log(record)
+    return record && record.promo && record.promo.id
+        ? <Labeled label="Promo">
+            <SelectField source={"promo.effect"} record={record} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+        </Labeled>
+        : null;
+};
+
 function renderOrderIsPayed(record, source) {
-    return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
+    return <BooleanField record={{...record, Payed: !!(record.payment && record.payment.id)}} source={"Payed"}/>
 }
 
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
@@ -130,6 +148,7 @@ const ManagerOrderShow = (props) => (
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
+            <ConditionalPromoField/>
             <NumberField source={"cost"}/>
             <TextField label={"Address"} source={"client.address"}/>
             <TextField label={"Phone"} source={"client.phone"}/>
@@ -192,7 +211,7 @@ export const ManagerCreate = (props) => (
     <Create {...props}>
         <SimpleForm>
             <TextInput source="username" validate={required()}/>
-            <TextInput source="password"  type={"password"} validate={required()}/>
+            <TextInput source="password" type={"password"} validate={required()}/>
             <TextInput source="restaurant" validate={required()}/>
         </SimpleForm>
     </Create>
@@ -203,7 +222,7 @@ export const CourierCreate = (props) => (
     <Create {...props}>
         <SimpleForm>
             <TextInput source="username" validate={required()}/>
-            <TextInput source="password"  type={"password"} validate={required()}/>
+            <TextInput source="password" type={"password"} validate={required()}/>
         </SimpleForm>
     </Create>
 );
@@ -213,11 +232,119 @@ export const OperatorCreate = (props) => (
     <Create {...props}>
         <SimpleForm>
             <TextInput source="username" validate={required()}/>
-            <TextInput source="password"  type={"password"} validate={required()}/>
+            <TextInput source="password" type={"password"} validate={required()}/>
             <NumberInput source="number" validate={required()}/>
         </SimpleForm>
     </Create>
 );
+
+const ManagerPromoList = (props) => (
+    <List {...props} bulkActions={false}>
+        <Datagrid rowClick="show">
+            <TextField source="id"/>
+            <TextField source="status"/>
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+        </Datagrid>
+    </List>
+);
+
+
+
+
+const startPromo = (promo) => () => {
+    promo.status = 'ACTIVE'
+    dataProvider(UPDATE, "promo", {
+        data: promo,
+        id: promo.id
+    }).then(location.reload())
+}
+
+
+function getManagerPromoNewActions(promo) {
+    return [
+        <UiButton color="primary" onClick={startPromo(promo)}>Start</UiButton>
+    ]
+}
+
+const finishPromo = (promo) => () => {
+    promo.status = 'FINISHED'
+    dataProvider(UPDATE, "promo", {
+        data: promo,
+        id: promo.id
+    }).then(location.reload())
+}
+
+
+function getManagerPromoActiveActions(promo) {
+    return [
+        <UiButton color="primary" onClick={finishPromo(promo)}>Finish</UiButton>
+    ]
+}
+
+function getManagerPromoFinishedActions(promo) {
+    return [
+        <PromoFinishButton promo={promo}/>
+    ]
+}
+
+function getManagerPromoActions(promo) {
+    console.log(promo)
+    let actions = []
+    if (promo.status === 'NEW') actions.push(...getManagerPromoNewActions(promo))
+    if (promo.status === 'ACTIVE') actions.push(...getManagerPromoActiveActions(promo))
+    if (promo.status === 'FINISHED') actions.push(...getManagerPromoFinishedActions(promo))
+    return actions
+}
+
+
+class PromoActionButtons extends React.Component {
+    render() {
+        if (!this.props.data) return (null)
+        return getManagerPromoActions(this.props.data);
+    }
+}
+
+const ManagerPromoShowActions = ({basePath, data, resource}) => {
+    return (
+        <UiCardActions style={cardActionStyle}>
+            <PromoActionButtons data={data}/>
+        </UiCardActions>
+    );
+};
+
+const ManagerPromoShow = (props) => (
+    <Show title={'Promo'}  actions={<ManagerPromoShowActions/>}{...props}>
+        <SimpleShowLayout>
+            <TextField source="id"/>
+            <TextField source="status"/>
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+        </SimpleShowLayout>
+    </Show>
+);
+
+
+const CreatePromoBulkActionButtons = (props) => (
+    <Fragment>
+        <PromoCreateButton {...props}/>
+    </Fragment>
+);
+
+export const ManagerClientList = (props) => {
+    return <List {...props} bulkActionButtons={<CreatePromoBulkActionButtons/>}>
+        <Datagrid>
+            <TextField source="login"/>
+            <TextField source="address"/>
+        </Datagrid>
+    </List>;
+};
 
 
 export const ManagerAdmin = () => {
@@ -238,8 +365,10 @@ export const ManagerAdmin = () => {
                 title="Manager"
             >
                 <Resource name={'order'} list={ManagerOrderList} show={ManagerOrderShow}/>
+                <Resource name={'promo'} list={ManagerPromoList} show={ManagerPromoShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
-                <Resource name={'manager'} create={ManagerCreate}  list={ManagerCreate}/>
+                <Resource name={'client'} list={ManagerClientList}/>
+                <Resource name={'manager'} create={ManagerCreate} list={ManagerCreate}/>
                 <Resource name={'operator'} create={OperatorCreate} list={OperatorCreate}/>
                 <Resource name={'courier'} create={CourierCreate} list={CourierCreate}/>
             </Admin>

@@ -30,8 +30,7 @@ fun Route.order() {
         val user = call.userOrNull ?: return@get call.respond(HttpStatusCode.Forbidden, "")
         val params = call.getListQueryParams<OrderListFilter>()
         val data = OrderLogic.list(user)
-        val response = call.responseListRange(data, params.range)
-        call.respond(response)
+        call.responseListRange(data, params.range)
     }
     get<SingleOrderRequest> {
         val user = call.userOrNull ?: return@get call.respond(HttpStatusCode.Forbidden, "")

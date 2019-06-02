@@ -21,7 +21,6 @@ fun Route.pizza() {
             params.filter?.orderId != null -> PizzaLogic.list(user, params.filter.orderId)
             else -> PizzaLogic.list()
         } ?: return@get call.respond(HttpStatusCode.NotFound, "")
-        val response = call.responseListRange(pizza, params.range)
-        call.respond(response)
+        call.responseListRange(pizza, params.range)
     }
 }

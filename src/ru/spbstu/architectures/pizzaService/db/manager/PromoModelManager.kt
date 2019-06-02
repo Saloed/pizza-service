@@ -77,25 +77,13 @@ suspend fun ModelManager<Promo>.getForOrder(orderId: Int) = Db.transaction {
         .singleOrNull()
 }?.let { Promo.modelManager.get(it) }
 
-suspend fun ModelManager<Promo>.setForOrder(promoOrderId: Int, promo: Promo): Promo? {
-    val current = Db.transaction {
-        OrderPromoTable.select { OrderPromoTable.orderId eq promoOrderId }
-            .map { it[OrderPromoTable.orderId] to it[OrderPromoTable.promoId] }
-            .singleOrNull()
-    }
-    if (current?.second == promo.id) return promo
-    Db.transaction<Unit> {
-        if (current == null) {
-            OrderPromoTable.insert {
-                it[orderId] = promoOrderId
-                it[promoId] = promo.id
-            }
-        } else {
-            OrderPromoTable.update({ OrderPromoTable.orderId eq promoOrderId }) {
-                it[promoId] = promo.id
-            }
-        }
-    }
-    return promo
+suspend fun ModelManager<Promo>.deleteForOrder(promoOrderId: Int)= Db.transaction {
+    OrderPromoTable.deleteWhere { OrderPromoTable.orderId eq promoOrderId }
 }
 
+suspend fun ModelManager<Promo>.setForOrder(promoOrderId: Int, promo: Promo) = Db.transaction {
+    OrderPromoTable.insert {
+        it[orderId] = promoOrderId
+        it[promoId] = promo.id
+    }
+}.let { promo }

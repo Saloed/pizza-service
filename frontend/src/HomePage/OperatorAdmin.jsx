@@ -16,6 +16,9 @@ import {
     Button,
     SimpleShowLayout,
     TextField,
+    ReferenceField,
+    Labeled,
+    SelectField,
     BooleanField,
     NumberField,
     FunctionField,
@@ -86,8 +89,22 @@ const OperatorOrderShowActions = ({basePath, data, resource}) => {
     );
 };
 
+
+const ConditionalPromoField = ({record, ...rest}) => {
+    console.log(record)
+    return record && record.promo && record.promo.id
+        ? <Labeled label="Promo">
+            <SelectField source={"promo.effect"} record={record} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+        </Labeled>
+        : null;
+};
+
 function renderOrderIsPayed(record, source) {
-    return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
+    return <BooleanField record={{...record, Payed: !!(record.payment && record.payment.id)}} source={"Payed"}/>
 }
 
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
@@ -98,6 +115,7 @@ const OperatorOrderShow = (props) => (
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
+            <ConditionalPromoField/>
             <NumberField source={"cost"}/>
             <TextField label={"Address"} source={"client.address"}/>
             <TextField label={"Phone"} source={"client.phone"}/>
@@ -154,6 +172,134 @@ const PizzaShow = (props) => (
     </Show>
 );
 
+
+const ClientPromoList = (props) => (
+    <List {...props} bulkActions={false}>
+        <Datagrid rowClick="show">
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+            <TextField source={"description"}/>
+        </Datagrid>
+    </List>
+);
+
+
+const ClientPromoShow = (props) => (
+    <Show title={'Promo'} {...props}>
+        <SimpleShowLayout>
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+            <TextField source={"description"}/>
+        </SimpleShowLayout>
+    </Show>
+);
+
+const OperatorClientPromoList = (props) => (
+    <List {...props} bulkActions={false}>
+        <Datagrid rowClick="show">
+            <TextField label={"Client"} source={"client.login"}/>
+            <TextField source={"status"}/>
+            <ReferenceField label="Promo" source="promoId" reference="promo" linkType={false}>
+                <TextField source="description"/>
+            </ReferenceField>
+        </Datagrid>
+    </List>
+);
+
+
+const informClient = (promoCLient) => () => {
+    promoCLient.status = 'PROCESSING'
+    dataProvider(UPDATE, "promoClient", {
+        data: promoCLient,
+        id: promoCLient.id
+    }).then(location.reload())
+}
+
+
+const closeClient = (promoCLient) => () => {
+    promoCLient.status = 'INFORMED'
+    dataProvider(UPDATE, "promoClient", {
+        data: promoCLient,
+        id: promoCLient.id
+    }).then(location.reload())
+}
+
+
+const reinformClient = (promoCLient) => () => {
+    promoCLient.status = 'NOTINFORMED'
+    dataProvider(UPDATE, "promoClient", {
+        data: promoCLient,
+        id: promoCLient.id
+    }).then(location.reload())
+}
+
+
+function getOperatorOrderNotInformedActions(promoClient) {
+    return [
+        <UiButton color="primary" onClick={informClient(promoClient)}>Inform</UiButton>
+    ]
+}
+
+
+function getOperatorOrderProcessingActions(promoClient) {
+    return [
+        <UiButton color="primary" onClick={closeClient(promoClient)}>Informed</UiButton>,
+        <UiButton color="primary" onClick={reinformClient(promoClient)}>Not informed</UiButton>
+    ]
+}
+
+function getOperatorPromoActions(promoClient) {
+    let actions = []
+    if (promoClient.status === 'NOTINFORMED') actions.push(...getOperatorOrderNotInformedActions(promoClient))
+    if (promoClient.status === 'PROCESSING') actions.push(...getOperatorOrderProcessingActions(promoClient))
+    return actions
+}
+
+class PromoActionButtons extends React.Component {
+    render() {
+        if (!this.props.data) return (null)
+        return getOperatorPromoActions(this.props.data);
+    }
+}
+
+const OperatorPromoShowActions = ({basePath, data, resource}) => {
+    return (
+        <UiCardActions style={cardActionStyle}>
+            <PromoActionButtons data={data}/>
+        </UiCardActions>
+    );
+};
+
+
+
+const OperatorClientPromoShow = (props) => (
+    <Show title={'Client promo'} actions={<OperatorPromoShowActions/>} {...props}>
+        <SimpleShowLayout>
+            <TextField label={"Client"} source={"client.login"}/>
+            <TextField label={"Phone"} source={"client.phone"}/>
+            <TextField label={"Address"} source={"client.address"}/>
+            <TextField source={"status"}/>
+            <ReferenceField label="Promo" source="promoId" reference="promo" linkType={false}>
+                <SimpleShowLayout>
+                    <SelectField source={"effect"} choices={[
+                        {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                        {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                        {id: 'DISCOUNT_15', name: 'Discount 15%'}
+                    ]} optionText="name" optionValue="id"/>
+                    <TextField source="description"/>
+                </SimpleShowLayout>
+            </ReferenceField>
+        </SimpleShowLayout>
+    </Show>
+);
+
+
 export const OperatorAdmin = () => {
     return (
         <Provider
@@ -172,7 +318,9 @@ export const OperatorAdmin = () => {
                 title="Operator"
             >
                 <Resource name={'order'} list={OperatorOrderList} show={OperatorOrderShow}/>
+                <Resource name={'promoClient'} list={OperatorClientPromoList} show={OperatorClientPromoShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
+                <Resource name={'promo'} list={ClientPromoList} show={ClientPromoShow}/>
             </Admin>
         </Provider>
     );

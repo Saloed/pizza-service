@@ -37,6 +37,7 @@ data class OrderWithPermission(
 )
 
 data class PromoClientWithPermission(
+    val id: Int,
     val promoId: Int,
     val client: ClientWithPermission,
     val operator: OperatorWithPermission?,
@@ -44,7 +45,7 @@ data class PromoClientWithPermission(
 )
 
 suspend fun PromoClient.fullPermission() = PromoClientWithPermission(
-    promoId, getClient()!!.fullPermission(), getOperator()?.fullPermission(), status.name
+    id, promoId, getClient()!!.fullPermission(), getOperator()?.fullPermission(), status.name
 )
 
 data class PromoWithPermission(

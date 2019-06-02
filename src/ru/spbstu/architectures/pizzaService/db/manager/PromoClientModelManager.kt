@@ -5,6 +5,7 @@ import ru.spbstu.architectures.pizzaService.db.Db
 import ru.spbstu.architectures.pizzaService.db.table.PromoClientTable
 import ru.spbstu.architectures.pizzaService.db.table.PromoTable
 import ru.spbstu.architectures.pizzaService.models.*
+import ru.spbstu.architectures.pizzaService.db.manager.PromoClientModelManager.buildPromoClient
 
 object PromoClientModelManager : ModelManager<PromoClient> {
     override suspend fun get(id: Int) = list { PromoClientTable.id eq id }.singleOrNull()
@@ -18,7 +19,9 @@ object PromoClientModelManager : ModelManager<PromoClient> {
             it[status] = model.status
             it[created] = model.createdAt
             it[updated] = model.updatedAt
-        }.let { model.copy(id = it[PromoClientTable.id]) }
+        }.let {
+            model.copy(id = it[PromoClientTable.id])
+        }
 
     fun updatePromoClient(model: PromoClient) = PromoClientTable.update({ PromoClientTable.id eq model.id }) {
         it[clientId] = model.clientId
@@ -41,17 +44,19 @@ object PromoClientModelManager : ModelManager<PromoClient> {
         PromoTable.id inList ids.toSet()
     }.map { it.id to it }.toMap()
 
+    fun ResultRow.buildPromoClient() = PromoClient(
+        this[PromoClientTable.id],
+        this[PromoClientTable.operatorId],
+        this[PromoClientTable.promoId],
+        this[PromoClientTable.clientId],
+        this[PromoClientTable.status],
+        this[PromoClientTable.created],
+        this[PromoClientTable.updated]
+    )
+
     override suspend fun list(where: SqlExpressionBuilder.() -> Op<Boolean>) = Db.transaction {
         PromoClientTable.select(where).map {
-            PromoClient(
-                it[PromoClientTable.id],
-                it[PromoClientTable.operatorId],
-                it[PromoClientTable.promoId],
-                it[PromoClientTable.clientId],
-                it[PromoClientTable.status],
-                it[PromoClientTable.created],
-                it[PromoClientTable.updated]
-            )
+            it.buildPromoClient()
         }
     }
 }
@@ -60,8 +65,16 @@ suspend fun ModelManager<PromoClient>.listPromo(promo: Promo) = list {
     PromoClientTable.promoId.eq(promo.id)
 }
 
+suspend fun ModelManager<PromoClient>.listForOperator(operator: Operator) = Db.transaction {
+    (PromoClientTable innerJoin PromoTable).select {
+        PromoTable.status.eq(PromoStatus.ACTIVE) and PromoClientTable.operatorId.eq(operator.id)
+    }.map { it.buildPromoClient() }
+}
+
 suspend fun ModelManager<PromoClient>.bulkCreate(promoClients: List<PromoClient>) = Db.transaction {
-    promoClients.map { PromoClientModelManager.insertPromoClient(it) }
+    promoClients.map {
+        PromoClientModelManager.insertPromoClient(it)
+    }
 }
 
 suspend fun ModelManager<PromoClient>.bulkUpdate(promoClients: List<PromoClient>) = Db.transaction {

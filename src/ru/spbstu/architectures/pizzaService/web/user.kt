@@ -112,11 +112,16 @@ fun Route.createUser() {
     }
 }
 
+data class ClientListFilter(val id: Int?)
+
 fun Route.listClients() {
     get("/client") {
         val user = call.userOrNull ?: return@get call.respond(HttpStatusCode.Unauthorized, "")
+        val params = call.getListQueryParams<ClientListFilter>()
         val result = UserLogic.listClients(user)
-        call.respondMyResult(result)
+        call.respondMyResult(result) {
+            responseListRange(it, params.range)
+        }
     }
 }
 

@@ -55,22 +55,29 @@ private abstract class CourierOrderTransition(vararg from: OrderStatus, to: Orde
 
 private val transitions = listOf(
     object : ClientOrderTransition(OrderStatus.DRAFT, to = OrderStatus.DRAFT) {
-        override fun additionalChecks(user: User, order: Order, modification: OrderModification) =
-            modification.promoId != null
 
         override suspend fun apply(user: User, order: Order, modification: OrderModification): MyResult<Order> {
+            if (modification.promoId == null && order.promo == null) return success(order)
+            val fullCost = Order.modelManager.pizza(order.id).map { it.price }.sum()
+            if (modification.promoId == null) {
+                Promo.modelManager.deleteForOrder(order.id)
+                return success(order.copy(promo = null, cost = fullCost))
+            }
             val promo = Promo.modelManager.listForClient(user as Client)
                 .find { it.id == modification.promoId }
                 ?: return fail("No promo available")
 
-            Promo.modelManager.setForOrder(order.id, promo)
-            val orderWithPromo = order.copy(promo = promo)
-            val fullCost = Order.modelManager.pizza(order.id).map { it.price }.sum()
             val newCost = when (promo.effect) {
                 PromoEffect.DISCOUNT_5 -> (fullCost * 0.95).toInt()
                 PromoEffect.DISCOUNT_10 -> (fullCost * 0.9).toInt()
                 PromoEffect.DISCOUNT_15 -> (fullCost * 0.85).toInt()
             }
+            if (order.promo != null) {
+                Promo.modelManager.deleteForOrder(order.id)
+            }
+
+            Promo.modelManager.setForOrder(order.id, promo)
+            val orderWithPromo = order.copy(promo = promo)
             return success(orderWithPromo.copy(cost = newCost))
         }
 

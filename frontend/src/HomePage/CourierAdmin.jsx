@@ -18,6 +18,8 @@ import {
     TextField,
     BooleanField,
     NumberField,
+    Labeled,
+    SelectField,
     FunctionField,
     ArrayField,
     ReferenceManyField,
@@ -60,7 +62,7 @@ const closeOrder = (order) => () => {
 
 
 function getOperatorOrderShippingActions(order) {
-    if (!!order.payment.id) {
+    if (!!(order.payment && order.payment.id)) {
         return [
             <UiButton color="primary" onClick={closeOrder(order)}>Close</UiButton>
         ]
@@ -101,8 +103,22 @@ const CourierOrderShowActions = ({basePath, data, resource}) => {
     );
 };
 
+
+const ConditionalPromoField = ({record, ...rest}) => {
+    console.log(record)
+    return record && record.promo && record.promo.id
+        ? <Labeled label="Promo">
+            <SelectField source={"promo.effect"} record={record} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+        </Labeled>
+        : null;
+};
+
 function renderOrderIsPayed(record, source) {
-    return <BooleanField record={{...record, Payed: !!record.payment.id}} source={"Payed"}/>
+    return <BooleanField record={{...record, Payed: !!(record.payment && record.payment.id)}} source={"Payed"}/>
 }
 
 const isPayedField = <FunctionField source="payment" label="Payed" render={renderOrderIsPayed}/>
@@ -113,6 +129,7 @@ const CourierOrderShow = (props) => (
             <TextField source="id"/>
             <TextField source="status"/>
             {isPayedField}
+            <ConditionalPromoField/>
             <NumberField source={"cost"}/>
             <TextField label={"Address"} source={"client.address"}/>
             <TextField label={"Phone"} source={"client.phone"}/>
@@ -166,6 +183,36 @@ const PizzaShow = (props) => (
     </Show>
 );
 
+
+const ClientPromoList = (props) => (
+    <List {...props} bulkActions={false}>
+        <Datagrid rowClick="show">
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+            <TextField source={"description"}/>
+        </Datagrid>
+    </List>
+);
+
+
+const ClientPromoShow = (props) => (
+    <Show title={'Promo'} {...props}>
+        <SimpleShowLayout>
+            <SelectField source={"effect"} choices={[
+                {id: 'DISCOUNT_5', name: 'Discount 5%'},
+                {id: 'DISCOUNT_10', name: 'Discount 10%'},
+                {id: 'DISCOUNT_15', name: 'Discount 15%'}
+            ]} optionText="name" optionValue="id"/>
+            <TextField source={"description"}/>
+        </SimpleShowLayout>
+    </Show>
+);
+
+
+
 export const CourierAdmin = () => {
     return (
         <Provider
@@ -185,6 +232,7 @@ export const CourierAdmin = () => {
             >
                 <Resource name={'order'} list={CourierOrderList} show={CourierOrderShow}/>
                 <Resource name={'pizza'} list={PizzaList} show={PizzaShow}/>
+                <Resource name={'promo'} list={ClientPromoList} show={ClientPromoShow}/>
             </Admin>
         </Provider>
     );

@@ -1,20 +1,36 @@
 package ru.spbstu.architectures.pizzaService.logic
 
 import org.joda.time.DateTime
-import ru.spbstu.architectures.pizzaService.db.manager.listPromo
+import ru.spbstu.architectures.pizzaService.db.manager.*
 import ru.spbstu.architectures.pizzaService.models.*
 import ru.spbstu.architectures.pizzaService.utils.MyResult
 
 object PromoClientLogic {
 
-    suspend fun list(user: User, promoId: Int): MyResult<List<PromoClientWithPermission>> {
-        if (user !is Manager && user !is Operator) return MyResult.Error("No access")
-        val promo = Promo.modelManager.get(promoId) ?: return MyResult.Error("No such promo")
-        if (user is Manager && promo.managerId != user.id) return MyResult.Error("No access")
-        val clients = PromoClient.modelManager.listPromo(promo).map { it.fullPermission() }
-        if (user is Manager) return MyResult.Success(clients)
-        val operatorClients = clients.filter { it.operator?.id == user.id }
-        return MyResult.Success(operatorClients)
+    suspend fun list(user: User, promoId: Int?): MyResult<List<PromoClientWithPermission>> {
+        return when {
+            user is Manager && promoId != null -> {
+                val promo = Promo.modelManager.get(promoId) ?: return MyResult.Error("No such promo")
+                if (promo.managerId != user.id) return MyResult.Error("No access")
+                PromoClient.modelManager.listPromo(promo).map { it.fullPermission() }
+            }
+            user is Manager && promoId == null -> {
+                val promos = Promo.modelManager.listForManager(user)
+                promos.flatMap {
+                    PromoClient.modelManager.listPromo(it).map { it.fullPermission() }
+                }
+            }
+            user is Operator && promoId != null -> {
+                val promo = Promo.modelManager.get(promoId) ?: return MyResult.Error("No such promo")
+                val clients = PromoClient.modelManager.listPromo(promo).map { it.fullPermission() }
+                clients.filter { it.operator?.id == user.id }
+            }
+            user is Operator && promoId == null -> {
+                PromoClient.modelManager.listForOperator(user).map { it.fullPermission() }
+            }
+
+            else -> return MyResult.Error("No access")
+        }.let { MyResult.Success(it) }
     }
 
     suspend fun get(user: User, id: Int): MyResult<PromoClientWithPermission> {

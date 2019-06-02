@@ -23,7 +23,7 @@ import ru.spbstu.architectures.pizzaService.utils.userOrNull
 @Location("/promo/{id}")
 data class SinglePromo(val id: Int)
 
-data class PromoListFilter(val id: Int?)
+data class PromoListFilter(val id: List<Int>?)
 
 data class PromoCreationForm(val clientIds: List<Int>, val effect: String, val description: String)
 data class PromoModificationForm(val status: String, val result: String?)
@@ -34,7 +34,8 @@ fun Route.promo() {
         val params = call.getListQueryParams<PromoListFilter>()
         val data = PromoLogic.list(user)
         call.respondMyResult(data) {
-            responseListRange(it, params.range)
+            val result = if (params.filter?.id != null) it.filter { it.id in params.filter.id } else it
+            responseListRange(result, params.range)
         }
     }
     get<SinglePromo> {

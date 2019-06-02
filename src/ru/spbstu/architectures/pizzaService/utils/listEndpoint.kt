@@ -4,7 +4,9 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
+import io.ktor.application.log
 import io.ktor.response.contentRange
+import io.ktor.response.respond
 import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.full.memberProperties
 
@@ -32,19 +34,21 @@ inline fun <reified T> ApplicationCall.getListQueryParams(): ListQueryParams<T> 
     return ListQueryParams(filter, range, sort)
 }
 
-inline fun <reified T> ApplicationCall.responseListRange(data: List<T>, range: IntRange?): List<T> {
-    if (data.isEmpty()) {
+suspend inline fun <reified T> ApplicationCall.responseListRange(data: List<T>, range: IntRange?) = when {
+    data.isEmpty() -> {
         response.contentRange(0..0L, 0)
-        return data
+        respond(data)
     }
-    if (range == null) {
+    range == null -> {
         response.contentRange(data.indices.toLong(), data.size.toLong())
-        return data
+        respond(data)
     }
-
-    val realRange = range.intersect(data.indices)
-    response.contentRange(realRange.toLong(), data.size.toLong())
-    return data.subList(realRange.first, realRange.endInclusive + 1)
+    else -> {
+        val realRange = range.intersect(data.indices)
+        response.contentRange(realRange.toLong(), data.size.toLong())
+        val result = data.subList(realRange.first, realRange.endInclusive + 1)
+        respond(result)
+    }
 }
 //
 //inline fun <reified T : Any> Sort.buildComparator(): Comparator<T> {

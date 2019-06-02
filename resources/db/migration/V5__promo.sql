@@ -12,6 +12,7 @@ create table if not exists promo
 
 create table if not exists promo_client
 (
+    id serial not null primary key ,
     promo_id    int          not null references promo,
     client_id   int          not null references client,
     operator_id int default null references operator,
