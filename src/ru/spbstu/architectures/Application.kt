@@ -1,6 +1,11 @@
 package ru.spbstu.architectures
 
 import com.google.gson.Gson
+import de.nielsfalk.ktor.swagger.*
+import de.nielsfalk.ktor.swagger.version.shared.Contact
+import de.nielsfalk.ktor.swagger.version.shared.Information
+import de.nielsfalk.ktor.swagger.version.v2.Swagger
+import de.nielsfalk.ktor.swagger.version.v3.OpenApi
 import io.ktor.application.*
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
@@ -11,7 +16,10 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
+import io.ktor.locations.Location
 import io.ktor.locations.Locations
+import io.ktor.locations.post
+import io.ktor.locations.get
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -28,6 +36,9 @@ import ru.spbstu.architectures.pizzaService.web.*
 
 
 val config: ConfigurationFacade = ConfigurationFacadeDummy
+
+@Location("/authenticate")
+class AuthenticationPath
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -77,13 +88,38 @@ fun Application.module() {
     install(ContentNegotiation) {
         gson {
             setPrettyPrinting()
-            serializeNulls()
+//            serializeNulls()
+        }
+    }
+
+
+    install(SwaggerSupport) {
+        path = "schema"
+        forwardRoot = true
+        val information = Information(
+            version = "0.1",
+            title = "pizza-service",
+            description = "Pizza service application api",
+            contact = Contact(
+                name = "Valentin Sobol"
+            )
+        )
+        swagger = Swagger().apply {
+            info = information
+            definitions
+        }
+        openApi = OpenApi().apply {
+            info = information
         }
     }
 
     routing {
-        post("/authenticate") {
-            val credentials = call.receive<UserCredentials>()
+        post<AuthenticationPath, UserCredentials>(
+            "all".description("authenticate user by login/password").responds(
+                ok<Token>(),
+                (HttpStatusCode.Unauthorized)()
+            )
+        ) { _, credentials ->
             val user = UserAuthorization.authenticate(credentials) ?: return@post call.respond(
                 HttpStatusCode.Unauthorized,
                 "Invalid username or password"

@@ -68,6 +68,7 @@ dependencies {
     compile "io.ktor:ktor-gson:$ktor_version"
     compile "io.ktor:ktor-client-apache:$ktor_version"
     compile "io.ktor:ktor-auth-jwt:$ktor_version"
+    compile group: 'de.nielsfalk.ktor', name: 'ktor-swagger', version: '0.5.0'
     compile "io.ktor:ktor-freemarker:$ktor_version"
     compile 'com.zaxxer:HikariCP:3.3.1'
     compile("org.jetbrains.exposed:exposed:0.13.7") {

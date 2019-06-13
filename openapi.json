@@ -1,0 +1,1375 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "Pizza service application api",
+    "version": "0.1",
+    "title": "pizza-service",
+    "contact": {
+      "name": "Valentin Sobol"
+    }
+  },
+  "paths": {
+    "/authenticate": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          }
+        },
+        "parameters": [],
+        "summary": "all",
+        "description": "authenticate user by login/password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCredentials"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/client": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "summary": "create",
+        "description": "Register a new client",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientRegistrationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "ClientWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "List of clients"
+      }
+    },
+    "/manager": {
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "create",
+        "description": "Create new manager",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagerRegistrationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/operator": {
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "create",
+        "description": "Create new operator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorRegistrationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/courier": {
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "RegistrationErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "create",
+        "description": "Create new courier",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourierRegistrationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/order": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "OrderWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "List of orders"
+      },
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "201": {
+            "description": "OrderWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Create order",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreateForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/order/{id}": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "404": {
+            "description": "Unit",
+            "content": {}
+          },
+          "200": {
+            "description": "OrderWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Single order"
+      },
+      "put": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "201": {
+            "description": "OrderWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Modify order",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderModificationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/pizza": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "Pizza",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pizza"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "orderId",
+            "in": "query",
+            "description": "orderId",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "List pizza"
+      }
+    },
+    "/payment": {
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PaymentWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Create payment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentCreateForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/promo": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Get list of promo"
+      },
+      "post": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Create promo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoCreationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/promo/{id}": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Get promo"
+      },
+      "put": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Modify promo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoModificationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    },
+    "/promoClient": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoClientWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoClientWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "promoId",
+            "in": "query",
+            "description": "promoId",
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "List promo client"
+      }
+    },
+    "/promoClient/{id}": {
+      "get": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoClientWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoClientWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "Get promo client"
+      },
+      "put": {
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {}
+          },
+          "200": {
+            "description": "PromoClientWithPermission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoClientWithPermission"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Unit",
+            "content": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "examples": {}
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization",
+            "required": true,
+            "deprecated": false,
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {}
+          }
+        ],
+        "summary": "all",
+        "description": "modify promo client",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoClientModificationForm"
+              },
+              "examples": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserCredentials": {
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "Token": {
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientRegistrationForm": {
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "RegistrationErrorResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ManagerRegistrationForm": {
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "restaurant": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "OperatorRegistrationForm": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "CourierRegistrationForm": {
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientWithPermission": {
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "login": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderWithPermission": {
+        "properties": {
+          "client": {
+            "description": "ClientWithPermission",
+            "$ref": "#/components/schemas/ClientWithPermission"
+          },
+          "cost": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "courier": {
+            "description": "CourierWithPermission",
+            "$ref": "#/components/schemas/CourierWithPermission"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "manager": {
+            "description": "ManagerWithPermission",
+            "$ref": "#/components/schemas/ManagerWithPermission"
+          },
+          "operator": {
+            "description": "OperatorWithPermission",
+            "$ref": "#/components/schemas/OperatorWithPermission"
+          },
+          "payment": {
+            "description": "PaymentWithPermission",
+            "$ref": "#/components/schemas/PaymentWithPermission"
+          },
+          "promo": {
+            "description": "PromoWithPermission",
+            "$ref": "#/components/schemas/PromoWithPermission"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "CourierWithPermission": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "login": {
+            "type": "string"
+          }
+        }
+      },
+      "ManagerWithPermission": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "login": {
+            "type": "string"
+          },
+          "restaurant": {
+            "type": "string"
+          }
+        }
+      },
+      "OperatorWithPermission": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "login": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaymentWithPermission": {
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "transaction": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "PromoWithPermission": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "manager": {
+            "description": "ManagerWithPermission",
+            "$ref": "#/components/schemas/ManagerWithPermission"
+          },
+          "result": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderCreateForm": {
+        "properties": {
+          "pizza": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "OrderModificationForm": {
+        "properties": {
+          "promoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Pizza": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toppings": {
+            "type": "array",
+            "items": {
+              "description": "PizzaTopping",
+              "$ref": "#/components/schemas/PizzaTopping"
+            }
+          }
+        }
+      },
+      "PizzaTopping": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "PaymentCreateForm": {
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "transaction": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "PromoCreationForm": {
+        "properties": {
+          "clientIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string"
+          }
+        }
+      },
+      "PromoModificationForm": {
+        "properties": {
+          "result": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PromoClientWithPermission": {
+        "properties": {
+          "client": {
+            "description": "ClientWithPermission",
+            "$ref": "#/components/schemas/ClientWithPermission"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "operator": {
+            "description": "OperatorWithPermission",
+            "$ref": "#/components/schemas/OperatorWithPermission"
+          },
+          "promoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PromoClientModificationForm": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {},
+    "parameters": {},
+    "examples": {},
+    "requestBodies": {},
+    "headers": {},
+    "securitySchemes": {},
+    "links": {},
+    "callbacks": {}
+  }
+}

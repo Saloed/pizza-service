@@ -1,16 +1,18 @@
 package ru.spbstu.architectures.pizzaService.web
 
+import de.nielsfalk.ktor.swagger.*
 import io.ktor.application.*
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.routing.get
-import io.ktor.routing.post
 import ru.spbstu.architectures.pizzaService.logic.UserLogic
 import ru.spbstu.architectures.pizzaService.models.User
 import ru.spbstu.architectures.pizzaService.models.UserRoleType
 import ru.spbstu.architectures.pizzaService.utils.*
+import io.ktor.locations.Location
+import io.ktor.routing.header
+import ru.spbstu.architectures.pizzaService.models.ClientWithPermission
 
 abstract class RegistrationForm {
     abstract val username: String
@@ -79,9 +81,26 @@ suspend fun createGenericUser(
     call.respond(HttpStatusCode.OK, RegistrationErrorResponse(""))
 }
 
+@Location("/client")
+class ClientPath
+
+
+@Location("/manager")
+class ManagerPath
+
+@Location("/operator")
+class OperatorPath
+
+@Location("/courier")
+class CourierPath
+
 fun Route.createClient() {
-    post("/client") {
-        val form = call.receive<ClientRegistrationForm>()
+    post<ClientPath, ClientRegistrationForm>(
+        "create".description("Register a new client").responds(
+            ok<RegistrationErrorResponse>(),
+            badRequest<RegistrationErrorResponse>()
+        )
+    ) { _, form ->
         createGenericUser(call, application, form) { login, password ->
             UserLogic.createClient(login, password)
         }
@@ -89,23 +108,41 @@ fun Route.createClient() {
 }
 
 fun Route.createUser() {
-    post("/manager") {
+    post<ManagerPath, ManagerRegistrationForm>(
+        "create".description("Create new manager")
+            .withAuthorization()
+            .responds(
+                ok<RegistrationErrorResponse>(),
+                badRequest<RegistrationErrorResponse>()
+            )
+    ) { _, form ->
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<ManagerRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserLogic.create(user, login, password, UserRoleType.Manager)
         }
     }
-    post("/operator") {
+    post<OperatorPath, OperatorRegistrationForm>(
+        "create".description("Create new operator")
+            .withAuthorization()
+            .responds(
+                ok<RegistrationErrorResponse>(),
+                badRequest<RegistrationErrorResponse>()
+            )
+    ) { _, form ->
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<OperatorRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserLogic.create(user, login, password, UserRoleType.Operator)
         }
     }
-    post("/courier") {
+    post<CourierPath, CourierRegistrationForm>(
+        "create".description("Create new courier")
+            .withAuthorization()
+            .responds(
+                ok<RegistrationErrorResponse>(),
+                badRequest<RegistrationErrorResponse>()
+            )
+    ) { _, form ->
         val user = call.userOrNull ?: return@post call.respond(HttpStatusCode.Unauthorized, "")
-        val form = call.receive<CourierRegistrationForm>()
         createGenericUser(call, application, form) { login, password ->
             UserLogic.create(user, login, password, UserRoleType.Courier)
         }
@@ -115,7 +152,14 @@ fun Route.createUser() {
 data class ClientListFilter(val id: Int?)
 
 fun Route.listClients() {
-    get("/client") {
+    get<ClientPath>(
+        "all".description("List of clients")
+            .withAuthorization()
+            .listQueryParameters<ClientListFilter>()
+            .responds(
+                ok<ClientWithPermission>()
+            )
+    ) {
         val user = call.userOrNull ?: return@get call.respond(HttpStatusCode.Unauthorized, "")
         val params = call.getListQueryParams<ClientListFilter>()
         val result = UserLogic.listClients(user)
