@@ -7,7 +7,7 @@
     "start": "webpack-dev-server --open --port 3030"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "history": "^4.7.2",
     "jwt-decode": "^2.2.0",
     "ra-data-simple-rest": "^2.9.2",
